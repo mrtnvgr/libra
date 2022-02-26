@@ -5,7 +5,7 @@ import pygame, math, os, copy, json, zipfile
 
 config = json.load(open("config.json"))
 
-title = "Libra 2022.0226-2"
+title = "Libra 2022.0226-3"
 
 pygame.display.set_caption(title)
 pygame.font.init()
@@ -38,10 +38,10 @@ def parseMap(map):
         if type=="osu":
             if hitObjects==True:
                 splitted = mapline.split(",")
-                if splitted[5]=="0:0:0:0:":
+                if splitted[5].split(":")[0]=="0":
                     converted.append([int(splitted[2]), int((int(splitted[0])*4)/512)])
                 else:
-                    converted.append([int(splitted[2]), int((int(splitted[0])*4)/512), int(splitted[5].split(":0:0:0:0:")[0]), False, 0])
+                    converted.append([int(splitted[2]), int((int(splitted[0])*4)/512), int(splitted[5].split(":")[0]), False, 0])
             else:
                 if mapline=="[HitObjects]":
                     hitObjects = True
@@ -81,7 +81,8 @@ def main():
                     osufile = open("maps/"+diff[:-4]+"/map.osu").read().split("\n")
                     for osuline in osufile:
                         if "AudioFilename" in osuline:
-                            audiofile = osuline.replace("AudioFilename:", "").replace(" ", "")
+                            audiofile = osuline.replace("AudioFilename:", "")
+                            if audiofile[0]==" ": audiofile = audiofile[1:]
                             oszfile.extract(audiofile, "maps/"+diff[:-4]+"/")
             os.remove(os.path.join('maps/', dir))
     files = os.listdir('maps/')
@@ -122,7 +123,8 @@ def main():
                     if os.path.exists("maps/"+maps[selectedMapIndex]+"/map.osu"):
                         for line in open("maps/"+maps[selectedMapIndex]+"/map.osu").read().split("\n"):
                             if "AudioFilename" in line:
-                                songfile = line.replace("AudioFilename:", "").replace(" ", "")
+                                songfile = line.replace("AudioFilename:", "")
+                                if songfile[0]==" ": songfile = songfile[1:]
                     pygame.mixer.music.load("maps/"+maps[selectedMapIndex]+"/"+songfile)
                     pygame.mixer.music.play()
                     pygame.mixer.music.pause()
