@@ -5,42 +5,55 @@ import pygame, math, os, copy, json
 
 config = json.load(open("config.json"))
 
-title = "Libra 0.0.1"
+title = "Libra 2022.0226"
 
 pygame.display.set_caption(title)
 pygame.font.init()
-pygame.mixer.init()
+pygame.mixer.init(44100)
 
 size = (1200, 900)
 screen = pygame.display.set_mode(size)
 
 BLACK = (0, 0, 0)
+GREY = (100, 100, 100)
 WHITE = (255, 255, 255)
 
-font = pygame.font.SysFont('Helvetica', 25)
-fontBold = pygame.font.SysFont('Helvetica', 25, bold=True)
-fontScore = pygame.font.SysFont('Helvetica', 60)
+font = pygame.font.SysFont('Arial', 25)
+fontBold = pygame.font.SysFont('Arial', 25, bold=True)
+fontScore = pygame.font.SysFont('Arial', 60)
 
 def padding(score, max):
     ret = str(math.floor(score))
     ret = "0" * (max - len(ret)) + ret
     return ret
 
-def parseMap(map, type="osu"):
-    mapdata = open("maps/"+map+"/map."+type, "r").read().split("\n")
+def parseMap(map):
+    try:
+        mapdata = open("maps/"+map+"/map.osu", "r").read().split("\n")
+        type = "osu"
+    except FileNotFoundError:
+        pass
+    try:
+        mapdata = open("maps/"+map+"/map.sm", "r").read().split("\n")
+        type = "stepmania"
+    except FileNotFoundError:
+        pass
     mapdata = [value for value in mapdata if value]
     hitObjects = False
     converted = []
     for mapline in mapdata:
-        if hitObjects==True:
-            splitted = mapline.split(",")
-            if splitted[5]=="0:0:0:0:":
-                converted.append([int(splitted[2]), int((int(splitted[0])*4)/512)])
+        if type=="osu":
+            if hitObjects==True:
+                splitted = mapline.split(",")
+                if splitted[5]=="0:0:0:0:":
+                    converted.append([int(splitted[2]), int((int(splitted[0])*4)/512)])
+                else:
+                    converted.append([int(splitted[2]), int((int(splitted[0])*4)/512), int(splitted[5].replace(":0:0:0:0:", "")), False, 0])
             else:
-                converted.append([int(splitted[2]), int((int(splitted[0])*4)/512), int(splitted[5].replace(":0:0:0:0:", "")), False, 0])
-        else:
-            if mapline=="[HitObjects]":
-                hitObjects = True
+                if mapline=="[HitObjects]":
+                    hitObjects = True
+        elif type=="stepmania":
+           pass # TODO 
     return converted
 
 def main():
@@ -64,7 +77,6 @@ def main():
     }
     hit = ""
     hitMarker = 0
-
     for dir in os.listdir('maps/'):
         if os.path.isdir(os.path.join('maps/', dir)):
             maps.append(dir)
@@ -83,6 +95,7 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key==pygame.K_ESCAPE and isPlaying:
                     isPlaying = False
+                    pygame.mixer.music.stop()
                 if event.key == pygame.K_DOWN and not isPlaying:
                     selectedMapIndex += 1
 
@@ -121,14 +134,15 @@ def main():
                     if event.key == eval(f'pygame.K_{config["keybinds"][i]}'):
                         keysDown[i] = False
                         keysReleased[i] = True
-        for i in range(len(maps)):
-            if i == selectedMapIndex:
+        if isPlaying==False:
+            for i in range(len(maps)):
+                if i == selectedMapIndex:
+                    map = maps[i]
+                    pygame.draw.rect(screen, WHITE, pygame.Rect(27, 63 + i * 25, 256, 29))
+                    screen.blit(font.render(map, False, BLACK), (30, 65 + i * 25))
+                    continue
                 map = maps[i]
-                pygame.draw.rect(screen, WHITE, pygame.Rect(27, 63 + i * 25, 256, 29))
-                screen.blit(font.render(map, False, BLACK), (30, 65 + i * 25))
-                continue
-            map = maps[i]
-            screen.blit(font.render(map, False, WHITE), (30, 65 + i * 25))
+                screen.blit(font.render(map, False, WHITE), (30, 65 + i * 25))
 
         for i in range(len(keysDown)):
             if keysDown[i]:
@@ -183,7 +197,6 @@ def main():
                 if keysPressed[i]:
                     if len(loadedLaneObjects[i]) != 0:
                         obj = loadedLaneObjects[i][0]
-                        
                         if len(obj) == 5:
                             unObj = unloadedObjects[unloadedObjects.index(loadedLaneObjects[i][0])]
                             unObj[3] = True
@@ -264,10 +277,10 @@ def main():
             pygame.mixer.music.unpause()
         
         if isPlaying==True:
-            screen.blit(fontBold.render("Perfect: ", True, config["hitColors"][3]), (940, 625))
-            screen.blit(fontBold.render("Good: ", True, config["hitColors"][2]), (980, 650))
-            screen.blit(fontBold.render("Bad: ", True, config["hitColors"][1]), (993, 675))
-            screen.blit(fontBold.render("Miss: ", True, config["hitColors"][0]), (980, 700))
+            screen.blit(fontBold.render("Perfect: ", True, config["hitColors"][3]), (950, 625))
+            screen.blit(fontBold.render("Good: ", True, config["hitColors"][2]), (973, 650))
+            screen.blit(fontBold.render("Bad: ", True, config["hitColors"][1]), (990, 675))
+            screen.blit(fontBold.render("Miss: ", True, config["hitColors"][0]), (981, 700))
             screen.blit(font.render(f"{padding(hitCount['perfect'], 4)}", True, WHITE), (1050, 625))
             screen.blit(font.render(f"{padding(hitCount['good'], 4)}", True, WHITE), (1050, 650))
             screen.blit(font.render(f"{padding(hitCount['bad'], 4)}", True, WHITE), (1050, 675))
@@ -276,6 +289,7 @@ def main():
             screen.blit(fontScore.render(padding(curScore, 7), True, WHITE), (920, 800))
             screen.blit(fontScore.render(str(combo), True, WHITE), (920,720))
             screen.blit(font.render('Combo', True, WHITE), (920, 770))
+            screen.blit(font.render(map, True, WHITE), (0,0))
         else:
             screen.blit(fontScore.render("Select song", True, WHITE), (450, 400))
         
