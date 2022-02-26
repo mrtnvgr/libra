@@ -6,11 +6,11 @@
 		"p"
 	],
 	"ar": 1.7,
-	"soundOffset": 0,
+	"noteOffset": 0,
 	"hitwindow": [
-		115,
-		70,
-		30
+		135,
+		90,
+		22
 	],
 	"hitColors": [
 		[255,0,0],

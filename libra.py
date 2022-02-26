@@ -5,7 +5,7 @@ import pygame, math, os, copy, json, zipfile
 
 config = json.load(open("config.json"))
 
-title = "Libra 2022.0226-1"
+title = "Libra 2022.0226-2"
 
 pygame.display.set_caption(title)
 pygame.font.init()
@@ -38,10 +38,10 @@ def parseMap(map):
         if type=="osu":
             if hitObjects==True:
                 splitted = mapline.split(",")
-                if ":" in splitted[5]:
+                if splitted[5]=="0:0:0:0:":
                     converted.append([int(splitted[2]), int((int(splitted[0])*4)/512)])
                 else:
-                    converted.append([int(splitted[2]), int((int(splitted[0])*4)/512), int(splitted[5].replace(":0:0:0:0:", "")), False, 0])
+                    converted.append([int(splitted[2]), int((int(splitted[0])*4)/512), int(splitted[5].split(":0:0:0:0:")[0]), False, 0])
             else:
                 if mapline=="[HitObjects]":
                     hitObjects = True
@@ -59,7 +59,6 @@ def main():
     playingFrame = 0
     combo = 0
     curScore = 0.0
-    scoreMultiiplier = 0.0
     hitCount = {
         'perfect': 0,
         'good': 0,
@@ -75,7 +74,10 @@ def main():
             for diff in oszfile.namelist():
                 if ".osu" in diff:
                     oszfile.extract(diff, "maps/"+diff[:-4])
-                    os.rename("maps/"+diff[:-4]+"/"+diff, "maps/"+diff[:-4]+"/map.osu")
+                    try:
+                        os.rename("maps/"+diff[:-4]+"/"+diff, "maps/"+diff[:-4]+"/map.osu")
+                    except FileExistsError: # windows fix bruh
+                        pass
                     osufile = open("maps/"+diff[:-4]+"/map.osu").read().split("\n")
                     for osuline in osufile:
                         if "AudioFilename" in osuline:
@@ -90,7 +92,6 @@ def main():
     while True:
         screen.fill(BLACK)
         
-        # reset keyspressed
         for i in range(len(keysPressed)):
             keysPressed[i] = False
             keysReleased[i] = False
@@ -125,7 +126,7 @@ def main():
                     pygame.mixer.music.load("maps/"+maps[selectedMapIndex]+"/"+songfile)
                     pygame.mixer.music.play()
                     pygame.mixer.music.pause()
-                    
+ 
                     loadedMap = parseMap(maps[selectedMapIndex])
                     curScore = 0.0
                     hitCount = dict.fromkeys(hitCount, 0)
@@ -133,7 +134,6 @@ def main():
                         loadedObjects.append(loadedMap.pop(0))
                     isPlaying = True
                     playingFrame = pygame.time.get_ticks()
-                    scoreMultiiplier = 1000000 / (len(loadedMap) + 20)
                 else:
                     for i in range(len(config["keybinds"])):
                         if event.key == eval(f"pygame.K_{config['keybinds'][i]}"):
@@ -218,15 +218,15 @@ def main():
                                 hit = "miss"
                                 combo = 0
                             elif hitDifference > config["hitwindow"][1]:
-                                curScore += scoreMultiiplier * 0.3
+                                curScore +=  50+(50*(combo)/25)
                                 hit = "bad"
                                 combo += 1
                             elif hitDifference > config["hitwindow"][2]:
-                                curScore += scoreMultiiplier * 0.5
+                                curScore += 100+(100*(combo)/25)
                                 hit = "good"
                                 combo += 1
                             else:
-                                curScore += scoreMultiiplier * 1
+                                curScore += 300+(300*(combo)/25)
                                 hit = "perfect"
                                 combo += 1
                             hitCount[hit] += 1
@@ -248,15 +248,15 @@ def main():
                                 hit = "miss"
                                 combo = 0
                             elif hitDifference > config["hitwindow"][1]:
-                                curScore += scoreMultiiplier * 0.3
+                                curScore += 50+(50*(combo)/25) 
                                 hit = "bad"
                                 combo += 1
                             elif hitDifference > config["hitwindow"][2]:
-                                curScore += scoreMultiiplier * 0.5
+                                curScore += 100*(100*(combo)/25)
                                 hit = "good"
                                 combo += 1
                             else:
-                                curScore += scoreMultiiplier * 1
+                                curScore += 300*(300*(combo)/25)
                                 hit = "perfect"
                                 combo += 1
                             hitCount[hit] += 1
@@ -283,7 +283,7 @@ def main():
 
             loadedObjects = unloadedObjects
 
-        if isPlaying and playingFrame + 2000 + config["soundOffset"] < pygame.time.get_ticks():
+        if isPlaying and playingFrame + 2000 + config["noteOffset"] < pygame.time.get_ticks():
             pygame.mixer.music.unpause()
         
         if isPlaying==True:
@@ -300,6 +300,12 @@ def main():
             screen.blit(fontScore.render(str(combo), True, WHITE), (920,720))
             screen.blit(font.render('Combo', True, WHITE), (920, 770))
             screen.blit(font.render(maps[selectedMapIndex], True, WHITE), (0,0))
+            totalObjects = hitCount['miss']+hitCount['bad']+hitCount['good']+hitCount['perfect']
+            if totalObjects!=0:
+                accuracy = int(100*((50*hitCount['bad'])+(100*hitCount['good'])+(300*(hitCount['perfect']+totalObjects)) )/( 300*(hitCount['bad']+hitCount['good']+hitCount['perfect']+hitCount["miss"]+totalObjects)))
+            else:
+                accuracy = "100"
+            screen.blit(fontScore.render(str(accuracy)+"%", True, WHITE), (0, 30))
             for i in range(4):
                 pygame.draw.circle(screen, WHITE, (390 + i * 140, 800), 60, 5)
         
