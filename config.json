@@ -6,6 +6,7 @@
 		"p"
 	],
 	"ar": 1.7,
+	"soundOffset": 0,
 	"hitwindow": [
 		115,
 		70,

@@ -1,11 +1,11 @@
 #!/bin/python3
 from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-import pygame, math, os, copy, json
+import pygame, math, os, copy, json, zipfile
 
 config = json.load(open("config.json"))
 
-title = "Libra 2022.0226"
+title = "Libra 2022.0226-1"
 
 pygame.display.set_caption(title)
 pygame.font.init()
@@ -28,16 +28,9 @@ def padding(score, max):
     return ret
 
 def parseMap(map):
-    try:
+    if os.path.exists("maps/"+map+"/map.osu")==True:
         mapdata = open("maps/"+map+"/map.osu", "r").read().split("\n")
         type = "osu"
-    except FileNotFoundError:
-        pass
-    try:
-        mapdata = open("maps/"+map+"/map.sm", "r").read().split("\n")
-        type = "stepmania"
-    except FileNotFoundError:
-        pass
     mapdata = [value for value in mapdata if value]
     hitObjects = False
     converted = []
@@ -45,15 +38,13 @@ def parseMap(map):
         if type=="osu":
             if hitObjects==True:
                 splitted = mapline.split(",")
-                if splitted[5]=="0:0:0:0:":
+                if ":" in splitted[5]:
                     converted.append([int(splitted[2]), int((int(splitted[0])*4)/512)])
                 else:
                     converted.append([int(splitted[2]), int((int(splitted[0])*4)/512), int(splitted[5].replace(":0:0:0:0:", "")), False, 0])
             else:
                 if mapline=="[HitObjects]":
                     hitObjects = True
-        elif type=="stepmania":
-           pass # TODO 
     return converted
 
 def main():
@@ -77,10 +68,25 @@ def main():
     }
     hit = ""
     hitMarker = 0
-    for dir in os.listdir('maps/'):
+    files = os.listdir('maps/')
+    for dir in files:
+        if ".osz" in dir:
+            oszfile = zipfile.ZipFile(os.path.join('maps/', dir))
+            for diff in oszfile.namelist():
+                if ".osu" in diff:
+                    oszfile.extract(diff, "maps/"+diff[:-4])
+                    os.rename("maps/"+diff[:-4]+"/"+diff, "maps/"+diff[:-4]+"/map.osu")
+                    osufile = open("maps/"+diff[:-4]+"/map.osu").read().split("\n")
+                    for osuline in osufile:
+                        if "AudioFilename" in osuline:
+                            audiofile = osuline.replace("AudioFilename:", "").replace(" ", "")
+                            oszfile.extract(audiofile, "maps/"+diff[:-4]+"/")
+            os.remove(os.path.join('maps/', dir))
+    files = os.listdir('maps/')
+    for dir in files:
         if os.path.isdir(os.path.join('maps/', dir)):
             maps.append(dir)
-    
+ 
     while True:
         screen.fill(BLACK)
         
@@ -96,6 +102,7 @@ def main():
                 if event.key==pygame.K_ESCAPE and isPlaying:
                     isPlaying = False
                     pygame.mixer.music.stop()
+                    combo = 0
                 if event.key == pygame.K_DOWN and not isPlaying:
                     selectedMapIndex += 1
 
@@ -111,7 +118,11 @@ def main():
                     elif selectedMapIndex == len(maps):
                         selectedMapIndex = 0
                 elif event.key == pygame.K_RETURN and not isPlaying:
-                    pygame.mixer.music.load(f"maps/{maps[selectedMapIndex]}/audio.mp3")
+                    if os.path.exists("maps/"+maps[selectedMapIndex]+"/map.osu"):
+                        for line in open("maps/"+maps[selectedMapIndex]+"/map.osu").read().split("\n"):
+                            if "AudioFilename" in line:
+                                songfile = line.replace("AudioFilename:", "").replace(" ", "")
+                    pygame.mixer.music.load("maps/"+maps[selectedMapIndex]+"/"+songfile)
                     pygame.mixer.music.play()
                     pygame.mixer.music.pause()
                     
@@ -138,9 +149,7 @@ def main():
             for i in range(len(maps)):
                 if i == selectedMapIndex:
                     map = maps[i]
-                    pygame.draw.rect(screen, WHITE, pygame.Rect(27, 63 + i * 25, 256, 29))
-                    screen.blit(font.render(map, False, BLACK), (30, 65 + i * 25))
-                    continue
+                    pygame.draw.rect(screen, WHITE, pygame.Rect(20, 63 + i * 25, 10, 29))
                 map = maps[i]
                 screen.blit(font.render(map, False, WHITE), (30, 65 + i * 25))
 
@@ -151,6 +160,7 @@ def main():
         if isPlaying and playingFrame + 1000 < pygame.time.get_ticks():
             if len(loadedObjects) == 0:
                 isPlaying = False
+                combo = 0
             unloadedObjects = copy.deepcopy(loadedObjects)
             loadedLaneObjects = [[], [], [], []]
             for obj in loadedObjects:
@@ -273,7 +283,7 @@ def main():
 
             loadedObjects = unloadedObjects
 
-        if isPlaying and playingFrame + 2000 < pygame.time.get_ticks():
+        if isPlaying and playingFrame + 2000 + config["soundOffset"] < pygame.time.get_ticks():
             pygame.mixer.music.unpause()
         
         if isPlaying==True:
@@ -289,12 +299,10 @@ def main():
             screen.blit(fontScore.render(padding(curScore, 7), True, WHITE), (920, 800))
             screen.blit(fontScore.render(str(combo), True, WHITE), (920,720))
             screen.blit(font.render('Combo', True, WHITE), (920, 770))
-            screen.blit(font.render(map, True, WHITE), (0,0))
-        else:
-            screen.blit(fontScore.render("Select song", True, WHITE), (450, 400))
+            screen.blit(font.render(maps[selectedMapIndex], True, WHITE), (0,0))
+            for i in range(4):
+                pygame.draw.circle(screen, WHITE, (390 + i * 140, 800), 60, 5)
         
-        for i in range(4):    
-            pygame.draw.circle(screen, WHITE, (390 + i * 140, 800), 60, 5) 
         pygame.display.flip()
         pygame.time.Clock().tick(144)
 
