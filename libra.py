@@ -5,7 +5,7 @@ import pygame, math, os, copy, json, zipfile
 
 config = json.load(open("config.json"))
 
-title = "Libra 2022.0226-3"
+title = "Libra 2022.0227"
 
 pygame.display.set_caption(title)
 pygame.font.init()
@@ -163,6 +163,7 @@ def main():
             if len(loadedObjects) == 0:
                 isPlaying = False
                 combo = 0
+                pygame.mixer.music.stop()
             unloadedObjects = copy.deepcopy(loadedObjects)
             loadedLaneObjects = [[], [], [], []]
             for obj in loadedObjects:
@@ -254,11 +255,11 @@ def main():
                                 hit = "bad"
                                 combo += 1
                             elif hitDifference > config["hitwindow"][2]:
-                                curScore += 100*(100*(combo)/25)
+                                curScore += 100+(100*(combo)/25)
                                 hit = "good"
                                 combo += 1
                             else:
-                                curScore += 300*(300*(combo)/25)
+                                curScore += 300+(300*(combo)/25)
                                 hit = "perfect"
                                 combo += 1
                             hitCount[hit] += 1
@@ -272,7 +273,6 @@ def main():
                 hitWidth = 0.39*35*len(hit)
                 if hit=="miss":
                     hitColor = copy.deepcopy(config["hitColors"][0])
-                    combo = 0
                 elif hit=="bad":
                     hitColor = copy.deepcopy(config["hitColors"][1])
                 elif hit=="good":
