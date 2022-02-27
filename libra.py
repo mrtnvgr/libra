@@ -5,7 +5,7 @@ import pygame, math, os, copy, json, zipfile
 
 config = json.load(open("config.json"))
 
-title = "Libra 2022.0227"
+title = "Libra 2022.0227-1"
 
 pygame.display.set_caption(title)
 pygame.font.init()
@@ -15,7 +15,6 @@ size = (1200, 900)
 screen = pygame.display.set_mode(size)
 
 BLACK = (0, 0, 0)
-GREY = (100, 100, 100)
 WHITE = (255, 255, 255)
 
 font = pygame.font.SysFont('Arial', 25)
@@ -138,13 +137,13 @@ def main():
                     playingFrame = pygame.time.get_ticks()
                 else:
                     for i in range(len(config["keybinds"])):
-                        if event.key == eval(f"pygame.K_{config['keybinds'][i]}"):
+                        if event.key == eval(f"pygame.K_{config['keybinds'][i]}") and isPlaying:
                             keysDown[i] = True
                             keysPressed[i] = True
                 
             elif event.type == pygame.KEYUP:
                 for i in range(len(config["keybinds"])):
-                    if event.key == eval(f'pygame.K_{config["keybinds"][i]}'):
+                    if event.key == eval(f'pygame.K_{config["keybinds"][i]}') and isPlaying:
                         keysDown[i] = False
                         keysReleased[i] = True
         if isPlaying==False:
@@ -163,7 +162,6 @@ def main():
             if len(loadedObjects) == 0:
                 isPlaying = False
                 combo = 0
-                pygame.mixer.music.stop()
             unloadedObjects = copy.deepcopy(loadedObjects)
             loadedLaneObjects = [[], [], [], []]
             for obj in loadedObjects:
@@ -201,7 +199,6 @@ def main():
                         hit = "miss"
                         hitMarker = pygame.time.get_ticks()
                         hitCount[hit] += 1
-                        # alter the copied array so index doesn't get mixed up
                         unloadedObjects.remove(obj)
                         if len(loadedMap) != 0:
                             unloadedObjects.append(loadedMap.pop(0))
@@ -282,7 +279,6 @@ def main():
                 for i in range(len(hitColor)):
                     hitColor[i] = max(min(hitColor[i] * (1 - ((pygame.time.get_ticks() - hitMarker) / config["hitFadeTime"])), 255), 0)
                 screen.blit(fontBold.render(hit, True, hitColor), (580 - hitWidth / 2, 640))
-
             loadedObjects = unloadedObjects
 
         if isPlaying and playingFrame + 2000 + config["noteOffset"] < pygame.time.get_ticks():
@@ -312,7 +308,7 @@ def main():
                 pygame.draw.circle(screen, WHITE, (390 + i * 140, 800), 60, 5)
         
         pygame.display.flip()
-        pygame.time.Clock().tick(144)
+        pygame.time.Clock().tick(config["fps"])
 
 if __name__ == "__main__":
     main()
