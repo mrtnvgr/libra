@@ -2,10 +2,11 @@
 from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame, math, os, copy, json, zipfile
+from natsort import natsorted
 
 config = json.load(open("config.json"))
 
-title = "Libra 2022.0227-1"
+title = "Libra 2022.0227-2"
 
 pygame.display.set_caption(title)
 pygame.font.init()
@@ -28,7 +29,7 @@ def padding(score, max):
 
 def parseMap(map):
     if os.path.exists("maps/"+map+"/map.osu")==True:
-        mapdata = open("maps/"+map+"/map.osu", "r").read().split("\n")
+        mapdata = open("maps/"+map+"/map.osu", "r", encoding="utf-8").read().split("\n")
         type = "osu"
     mapdata = [value for value in mapdata if value]
     hitObjects = False
@@ -77,7 +78,7 @@ def main():
                         os.rename("maps/"+diff[:-4]+"/"+diff, "maps/"+diff[:-4]+"/map.osu")
                     except FileExistsError: # windows fix bruh
                         pass
-                    osufile = open("maps/"+diff[:-4]+"/map.osu").read().split("\n")
+                    osufile = open("maps/"+diff[:-4]+"/map.osu", encoding="utf-8").read().split("\n")
                     for osuline in osufile:
                         if "AudioFilename" in osuline:
                             audiofile = osuline.replace("AudioFilename:", "")
@@ -88,7 +89,7 @@ def main():
     for dir in files:
         if os.path.isdir(os.path.join('maps/', dir)):
             maps.append(dir)
- 
+    maps = natsorted(maps) 
     while True:
         screen.fill(BLACK)
         
@@ -120,7 +121,7 @@ def main():
                         selectedMapIndex = 0
                 elif event.key == pygame.K_RETURN and not isPlaying:
                     if os.path.exists("maps/"+maps[selectedMapIndex]+"/map.osu"):
-                        for line in open("maps/"+maps[selectedMapIndex]+"/map.osu").read().split("\n"):
+                        for line in open("maps/"+maps[selectedMapIndex]+"/map.osu", encoding="utf-8").read().split("\n"):
                             if "AudioFilename" in line:
                                 songfile = line.replace("AudioFilename:", "")
                                 if songfile[0]==" ": songfile = songfile[1:]
@@ -146,13 +147,6 @@ def main():
                     if event.key == eval(f'pygame.K_{config["keybinds"][i]}') and isPlaying:
                         keysDown[i] = False
                         keysReleased[i] = True
-        if isPlaying==False:
-            for i in range(len(maps)):
-                if i == selectedMapIndex:
-                    map = maps[i]
-                    pygame.draw.rect(screen, WHITE, pygame.Rect(20, 63 + i * 25, 10, 29))
-                map = maps[i]
-                screen.blit(font.render(map, False, WHITE), (30, 65 + i * 25))
 
         for i in range(len(keysDown)):
             if keysDown[i]:
@@ -295,8 +289,8 @@ def main():
             screen.blit(font.render(f"{padding(hitCount['miss'], 4)}", True, WHITE), (1050, 700))
             screen.blit(font.render('Score', True, WHITE), (920, 850))
             screen.blit(fontScore.render(padding(curScore, 7), True, WHITE), (920, 800))
-            screen.blit(fontScore.render(str(combo), True, WHITE), (920,720))
-            screen.blit(font.render('Combo', True, WHITE), (920, 770))
+            screen.blit(fontScore.render(str(combo), True, WHITE), (0,800))
+            screen.blit(font.render('Combo', True, WHITE), (0, 850))
             screen.blit(font.render(maps[selectedMapIndex], True, WHITE), (0,0))
             totalObjects = hitCount['miss']+hitCount['bad']+hitCount['good']+hitCount['perfect']
             if totalObjects!=0:
@@ -304,9 +298,17 @@ def main():
             else:
                 accuracy = "100"
             screen.blit(fontScore.render(str(accuracy)+"%", True, WHITE), (0, 30))
+            screen.blit(font.render("Accuracy", True, WHITE), (0, 80))
             for i in range(4):
                 pygame.draw.circle(screen, WHITE, (390 + i * 140, 800), 60, 5)
-        
+        else:
+            screen.blit(fontBold.render(title, True, WHITE), (0,0))
+            screen.blit(fontBold.render("Maps:", True, WHITE), (0,20))
+            pygame.draw.rect(screen, WHITE, pygame.Rect(0, 63, 15, 29))
+            for i in range(len(maps[selectedMapIndex:])):
+                screen.blit(font.render(maps[selectedMapIndex:][i], False, WHITE), (30, 65 + i * 25))
+
+
         pygame.display.flip()
         pygame.time.Clock().tick(config["fps"])
 

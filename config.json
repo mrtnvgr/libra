@@ -2,8 +2,8 @@
 	"keybinds": [
 		"q",
 		"w",
-		"o",
-		"p"
+		"LEFTBRACKET",
+		"RIGHTBRACKET"
 	],
 	"ar": 1.7,
 	"noteOffset": 0,
