@@ -6,7 +6,7 @@ from natsort import natsorted
 
 config = json.load(open("config.json"))
 
-title = "Libra 2022.0227-2"
+title = "Libra 2022.0227-3"
 
 pygame.display.set_caption(title)
 pygame.font.init()
@@ -52,6 +52,8 @@ def main():
     loadedMap = []
     loadedObjects = []
     selectedMapIndex = 0
+    selectingMaps = ""
+    selectingMapsCooldown = 0
     keysDown = [False, False, False, False]
     keysPressed = [False, False, False, False]
     keysReleased = [False, False, False, False]
@@ -97,6 +99,20 @@ def main():
             keysPressed[i] = False
             keysReleased[i] = False
         
+        if selectingMaps!="":
+            if selectingMapsCooldown==10:
+                if selectingMaps=="down":
+                    selectedMapIndex += 1
+                elif selectingMaps=="up":
+                    selectedMapIndex -= 1
+                if selectedMapIndex==-1:
+                    selectedMapIndex = len(maps) - 1
+                elif selectedMapIndex==len(maps):
+                    selectedMapIndex = 0
+                selectingMapsCooldown = 0
+            else:
+                selectingMapsCooldown+=1
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
@@ -106,19 +122,9 @@ def main():
                     pygame.mixer.music.stop()
                     combo = 0
                 if event.key == pygame.K_DOWN and not isPlaying:
-                    selectedMapIndex += 1
-
-                    if selectedMapIndex == -1:
-                        selectedMapIndex = len(maps) - 1
-                    elif selectedMapIndex == len(maps):
-                        selectedMapIndex = 0
+                    selectingMaps = "down"
                 elif event.key == pygame.K_UP and not isPlaying:
-                    selectedMapIndex -= 1
-                    
-                    if selectedMapIndex == -1:
-                        selectedMapIndex = len(maps) - 1
-                    elif selectedMapIndex == len(maps):
-                        selectedMapIndex = 0
+                    selectingMaps = "up"
                 elif event.key == pygame.K_RETURN and not isPlaying:
                     if os.path.exists("maps/"+maps[selectedMapIndex]+"/map.osu"):
                         for line in open("maps/"+maps[selectedMapIndex]+"/map.osu", encoding="utf-8").read().split("\n"):
@@ -132,6 +138,9 @@ def main():
                     loadedMap = parseMap(maps[selectedMapIndex])
                     curScore = 0.0
                     hitCount = dict.fromkeys(hitCount, 0)
+                    keysDown = [False, False, False, False]
+                    keysPressed = [False, False, False, False]
+                    keysReleased = [False, False, False, False]
                     for i in range(20):
                         loadedObjects.append(loadedMap.pop(0))
                     isPlaying = True
@@ -143,19 +152,22 @@ def main():
                             keysPressed[i] = True
                 
             elif event.type == pygame.KEYUP:
+                if (event.key==pygame.K_DOWN or event.key==pygame.K_UP) and not isPlaying:
+                    selectingMaps = ""
                 for i in range(len(config["keybinds"])):
                     if event.key == eval(f'pygame.K_{config["keybinds"][i]}') and isPlaying:
                         keysDown[i] = False
                         keysReleased[i] = True
 
         for i in range(len(keysDown)):
-            if keysDown[i]:
+            if keysDown[i] and isPlaying==True:
                 pygame.draw.circle(screen, config["colors"][i], (390 + i * 140, 800), 60) 
 
         if isPlaying and playingFrame + 1000 < pygame.time.get_ticks():
             if len(loadedObjects) == 0:
                 isPlaying = False
                 combo = 0
+                pygame.mixer.music.stop()
             unloadedObjects = copy.deepcopy(loadedObjects)
             loadedLaneObjects = [[], [], [], []]
             for obj in loadedObjects:
