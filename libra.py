@@ -1,12 +1,42 @@
 #!/bin/python3
 from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-import pygame, math, os, sys, copy, json, zipfile
+import pygame, math, os, sys, json, zipfile
 from natsort import natsorted
 
-config = json.load(open("config.json"))
-
-title = "Libra 2022.0228"
+try:
+    config = json.load(open("config.json"))
+except FileNotFoundError:
+    print("Config does not exist. Using default settings")
+    config = {
+        "keybinds": [
+            "q",
+            "w",
+            "LEFTBRACKET",
+            "RIGHTBRACKET"
+        ],
+        "ar": 1.7,
+        "noteOffset": 0,
+        "fps": 144,
+        "hitwindow": [
+            135,
+            90,
+            22
+        ],
+        "hitColors": [
+            [255,0,0],
+            [255,0,255],
+            [100,255,100],
+            [255,255,0]
+        ],
+        "colors": [
+            [171,171,171],
+            [3,116,170],
+            [3,116,170],
+            [171,171,171]
+        ]
+    }
+title = "Libra 2022.0228-1"
 
 pygame.display.set_caption(title)
 pygame.font.init()
@@ -24,8 +54,7 @@ fontScore = pygame.font.SysFont('Arial', 60)
 
 def padding(score, max):
     ret = str(math.floor(score))
-    ret = "0" * (max - len(ret)) + ret
-    return ret
+    return "0" * (max - len(ret)) + ret
 
 def parseMap(map):
     if os.path.exists("maps/"+map+"/map.osu")==True:
@@ -38,7 +67,7 @@ def parseMap(map):
         if type=="osu":
             if hitObjects==True:
                 splitted = mapline.split(",")
-                if splitted[5].split(":")[0]=="0":
+                if int(splitted[5].split(":")[0])<2:
                     converted.append([int(splitted[2]), int((int(splitted[0])*4)/512)])
                 else:
                     converted.append([int(splitted[2]), int((int(splitted[0])*4)/512), int(splitted[5].split(":")[0]), False, 0])
@@ -68,10 +97,16 @@ def main():
         'miss': 0
     }
     hit = ""
-    hitMarker = 0
-    files = os.listdir('maps/')
+    try:
+        files = os.listdir('maps/')
+    except FileNotFoundError:
+        os.mkdir('maps')
+        files = []
     for dir in files:
         if ".osz" in dir:
+            screen.blit(font.render(title, True, WHITE), (0,0))
+            screen.blit(font.render("Unzipping...", True, WHITE), (0,20))
+            pygame.display.flip()
             oszfile = zipfile.ZipFile(os.path.join('maps/', dir))
             for diff in oszfile.namelist():
                 if ".osu" in diff:
@@ -94,13 +129,12 @@ def main():
     maps = natsorted(maps) 
     while True:
         screen.fill(BLACK)
-        
         for i in range(len(keysPressed)):
             keysPressed[i] = False
             keysReleased[i] = False
         
         if selectingMaps!="":
-            if selectingMapsCooldown==10:
+            if selectingMapsCooldown==20:
                 if selectingMaps=="down":
                     selectedMapIndex += 1
                 elif selectingMaps=="up":
@@ -109,9 +143,8 @@ def main():
                     selectedMapIndex = len(maps) - 1
                 elif selectedMapIndex==len(maps):
                     selectedMapIndex = 0
-                selectingMapsCooldown = 0
             else:
-                selectingMapsCooldown+=1
+                selectingMapsCooldown += 1
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -121,15 +154,17 @@ def main():
                     if isPlaying:
                         isPlaying = False
                         pygame.mixer.music.stop()
-                        combo = 0
                     else:
                         pygame.quit()
                         sys.exit(0)
-                if event.key == pygame.K_DOWN and not isPlaying:
+                if (event.key == pygame.K_DOWN or event.key==pygame.K_s) and not isPlaying:
+                    selectedMapIndex += 1
                     selectingMaps = "down"
-                elif event.key == pygame.K_UP and not isPlaying:
+                elif (event.key == pygame.K_UP or event.key==pygame.K_w) and not isPlaying:
+                    selectedMapIndex -= 1
                     selectingMaps = "up"
                 elif event.key == pygame.K_RETURN and not isPlaying:
+                    if maps==[]: continue # no maps error fix
                     if os.path.exists("maps/"+maps[selectedMapIndex]+"/map.osu"):
                         for line in open("maps/"+maps[selectedMapIndex]+"/map.osu", encoding="utf-8").read().split("\n"):
                             if "AudioFilename" in line:
@@ -140,11 +175,15 @@ def main():
                     pygame.mixer.music.pause()
  
                     loadedMap = parseMap(maps[selectedMapIndex])
-                    curScore = 0.0
-                    hitCount = dict.fromkeys(hitCount, 0)
+                    
                     keysDown = [False, False, False, False]
                     keysPressed = [False, False, False, False]
                     keysReleased = [False, False, False, False]
+                    combo = 0
+                    curScore = 0.0
+                    hit = ""
+                    loadedObjects = []
+
                     for i in range(20):
                         loadedObjects.append(loadedMap.pop(0))
                     isPlaying = True
@@ -156,7 +195,8 @@ def main():
                             keysPressed[i] = True
                 
             elif event.type == pygame.KEYUP:
-                if (event.key==pygame.K_DOWN or event.key==pygame.K_UP) and not isPlaying:
+                if (event.key==pygame.K_DOWN or event.key==pygame.K_UP or event.key==pygame.K_w or event.key==pygame.K_s) and not isPlaying:
+                    selectingMapsCooldown = 0
                     selectingMaps = ""
                 for i in range(len(config["keybinds"])):
                     if event.key == eval(f'pygame.K_{config["keybinds"][i]}') and isPlaying:
@@ -173,9 +213,8 @@ def main():
         if isPlaying and playingFrame + 1000 < pygame.time.get_ticks():
             if len(loadedObjects) == 0:
                 isPlaying = False
-                combo = 0
                 pygame.mixer.music.stop()
-            unloadedObjects = copy.deepcopy(loadedObjects)
+            unloadedObjects = loadedObjects
             loadedLaneObjects = [[], [], [], []]
             for obj in loadedObjects:
                 for i in range(len(keysPressed)):
@@ -282,15 +321,13 @@ def main():
             if hit != "":
                 hitWidth = 0.39*35*len(hit)
                 if hit=="miss":
-                    hitColor = copy.deepcopy(config["hitColors"][0])
+                    hitColor = config["hitColors"][0]
                 elif hit=="bad":
-                    hitColor = copy.deepcopy(config["hitColors"][1])
+                    hitColor = config["hitColors"][1]
                 elif hit=="good":
-                    hitColor = copy.deepcopy(config["hitColors"][2])
+                    hitColor = config["hitColors"][2]
                 elif hit=="perfect":
-                    hitColor = copy.deepcopy(config["hitColors"][3])
-                for i in range(len(hitColor)):
-                    hitColor[i] = max(min(hitColor[i] * (1 - ((pygame.time.get_ticks() - hitMarker) / config["hitFadeTime"])), 255), 0)
+                    hitColor = config["hitColors"][3]
                 screen.blit(fontBold.render(hit, True, hitColor), (580 - hitWidth / 2, 640))
             loadedObjects = unloadedObjects
 
