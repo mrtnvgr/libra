@@ -1,7 +1,7 @@
 #!/bin/python3
 from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-import pygame, math, os, sys, json, zipfile
+import pygame, math, os, sys, shutil, json, zipfile
 from natsort import natsorted
 
 try:
@@ -36,7 +36,7 @@ except FileNotFoundError:
             [171,171,171]
         ]
     }
-title = "Libra 2022.0228-1"
+title = "Libra 2022.0228-2"
 
 pygame.display.set_caption(title)
 pygame.font.init()
@@ -76,8 +76,38 @@ def parseMap(map):
                     hitObjects = True
     return converted
 
-def main():
+def reloadMaps():
+    files = os.listdir('maps/')
     maps = []
+    for dir in files:
+        if os.path.isdir(os.path.join('maps/', dir)):
+            maps.append(dir)
+    return natsorted(maps)
+
+def importMaps():
+    files = os.listdir('maps/')
+    for dir in files:
+            if ".osz" in dir:
+                screen.blit(font.render(title, True, WHITE), (0,0))
+                screen.blit(font.render("Unzipping...", True, WHITE), (0,20))
+                pygame.display.flip()
+                oszfile = zipfile.ZipFile(os.path.join('maps/', dir))
+                for diff in oszfile.namelist():
+                    if ".osu" in diff:
+                        oszfile.extract(diff, "maps/"+diff[:-4])
+                        try:
+                            os.rename("maps/"+diff[:-4]+"/"+diff, "maps/"+diff[:-4]+"/map.osu")
+                        except FileExistsError: # windows fix bruh
+                            pass
+                        osufile = open("maps/"+diff[:-4]+"/map.osu", encoding="utf-8").read().split("\n")
+                        for osuline in osufile:
+                            if "AudioFilename" in osuline:
+                                audiofile = osuline.replace("AudioFilename:", "")
+                                if audiofile[0]==" ": audiofile = audiofile[1:]
+                                oszfile.extract(audiofile, "maps/"+diff[:-4]+"/")
+                os.remove(os.path.join('maps/', dir))
+
+def main():
     loadedMap = []
     loadedObjects = []
     selectedMapIndex = 0
@@ -102,31 +132,8 @@ def main():
     except FileNotFoundError:
         os.mkdir('maps')
         files = []
-    for dir in files:
-        if ".osz" in dir:
-            screen.blit(font.render(title, True, WHITE), (0,0))
-            screen.blit(font.render("Unzipping...", True, WHITE), (0,20))
-            pygame.display.flip()
-            oszfile = zipfile.ZipFile(os.path.join('maps/', dir))
-            for diff in oszfile.namelist():
-                if ".osu" in diff:
-                    oszfile.extract(diff, "maps/"+diff[:-4])
-                    try:
-                        os.rename("maps/"+diff[:-4]+"/"+diff, "maps/"+diff[:-4]+"/map.osu")
-                    except FileExistsError: # windows fix bruh
-                        pass
-                    osufile = open("maps/"+diff[:-4]+"/map.osu", encoding="utf-8").read().split("\n")
-                    for osuline in osufile:
-                        if "AudioFilename" in osuline:
-                            audiofile = osuline.replace("AudioFilename:", "")
-                            if audiofile[0]==" ": audiofile = audiofile[1:]
-                            oszfile.extract(audiofile, "maps/"+diff[:-4]+"/")
-            os.remove(os.path.join('maps/', dir))
-    files = os.listdir('maps/')
-    for dir in files:
-        if os.path.isdir(os.path.join('maps/', dir)):
-            maps.append(dir)
-    maps = natsorted(maps) 
+    importMaps()
+    maps = reloadMaps()
     while True:
         screen.fill(BLACK)
         for i in range(len(keysPressed)):
@@ -153,6 +160,19 @@ def main():
                 if event.key==pygame.K_ESCAPE:
                     if isPlaying:
                         isPlaying = False
+                        loadedObjects = []
+                        keysDown = [False, False, False, False]
+                        keysPressed = [False, False, False, False]
+                        keysReleased = [False, False, False, False]
+                        combo = 0
+                        curScore = 0.0
+                        hitCount = {
+                            "perfect": 0,
+                            "good": 0,
+                            "bad": 0,
+                            "miss": 0
+                        }
+                        hit = ""
                         pygame.mixer.music.stop()
                     else:
                         pygame.quit()
@@ -163,6 +183,12 @@ def main():
                 elif (event.key == pygame.K_UP or event.key==pygame.K_w) and not isPlaying:
                     selectedMapIndex -= 1
                     selectingMaps = "up"
+                elif event.key==pygame.K_DELETE:
+                    shutil.rmtree("maps/"+maps[selectedMapIndex], ignore_errors=True)
+                    maps = reloadMaps()
+                elif event.key==pygame.K_r:
+                    importMaps()
+                    maps = reloadMaps()
                 elif event.key == pygame.K_RETURN and not isPlaying:
                     if maps==[]: continue # no maps error fix
                     if os.path.exists("maps/"+maps[selectedMapIndex]+"/map.osu"):
@@ -176,14 +202,6 @@ def main():
  
                     loadedMap = parseMap(maps[selectedMapIndex])
                     
-                    keysDown = [False, False, False, False]
-                    keysPressed = [False, False, False, False]
-                    keysReleased = [False, False, False, False]
-                    combo = 0
-                    curScore = 0.0
-                    hit = ""
-                    loadedObjects = []
-
                     for i in range(20):
                         loadedObjects.append(loadedMap.pop(0))
                     isPlaying = True
@@ -213,6 +231,19 @@ def main():
         if isPlaying and playingFrame + 1000 < pygame.time.get_ticks():
             if len(loadedObjects) == 0:
                 isPlaying = False
+                loadedObjects = []
+                keysDown = [False, False, False, False]
+                keysPressed = [False, False, False, False]
+                keysReleased = [False, False, False, False]
+                combo = 0
+                curScore = 0.0
+                hitCount = {
+                    "perfect": 0,
+                    "good": 0,
+                    "bad": 0,
+                    "miss": 0
+                }
+                hit = ""
                 pygame.mixer.music.stop()
             unloadedObjects = loadedObjects
             loadedLaneObjects = [[], [], [], []]
