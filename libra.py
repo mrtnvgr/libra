@@ -1,12 +1,12 @@
 #!/bin/python3
 from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-import pygame, math, os, copy, json, zipfile
+import pygame, math, os, sys, copy, json, zipfile
 from natsort import natsorted
 
 config = json.load(open("config.json"))
 
-title = "Libra 2022.0227-3"
+title = "Libra 2022.0228"
 
 pygame.display.set_caption(title)
 pygame.font.init()
@@ -117,10 +117,14 @@ def main():
             if event.type == pygame.QUIT:
                 return
             if event.type == pygame.KEYDOWN:
-                if event.key==pygame.K_ESCAPE and isPlaying:
-                    isPlaying = False
-                    pygame.mixer.music.stop()
-                    combo = 0
+                if event.key==pygame.K_ESCAPE:
+                    if isPlaying:
+                        isPlaying = False
+                        pygame.mixer.music.stop()
+                        combo = 0
+                    else:
+                        pygame.quit()
+                        sys.exit(0)
                 if event.key == pygame.K_DOWN and not isPlaying:
                     selectingMaps = "down"
                 elif event.key == pygame.K_UP and not isPlaying:
@@ -158,11 +162,14 @@ def main():
                     if event.key == eval(f'pygame.K_{config["keybinds"][i]}') and isPlaying:
                         keysDown[i] = False
                         keysReleased[i] = True
-
+        
         for i in range(len(keysDown)):
-            if keysDown[i] and isPlaying==True:
-                pygame.draw.circle(screen, config["colors"][i], (390 + i * 140, 800), 60) 
-
+            if isPlaying:
+                if keysDown[i]:
+                    pygame.draw.circle(screen, config["colors"][i], (390 + i * 140, 800), 60, 5)
+                    pygame.draw.circle(screen, config["colors"][i], (390 + i * 140, 800), 60) 
+                else:
+                    pygame.draw.circle(screen, WHITE, (390 + i * 140, 800), 60, 5)
         if isPlaying and playingFrame + 1000 < pygame.time.get_ticks():
             if len(loadedObjects) == 0:
                 isPlaying = False
@@ -311,8 +318,6 @@ def main():
                 accuracy = "100"
             screen.blit(fontScore.render(str(accuracy)+"%", True, WHITE), (0, 30))
             screen.blit(font.render("Accuracy", True, WHITE), (0, 80))
-            for i in range(4):
-                pygame.draw.circle(screen, WHITE, (390 + i * 140, 800), 60, 5)
         else:
             screen.blit(fontBold.render(title, True, WHITE), (0,0))
             screen.blit(fontBold.render("Maps:", True, WHITE), (0,20))
