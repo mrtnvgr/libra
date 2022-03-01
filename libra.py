@@ -4,44 +4,57 @@ environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame, math, os, sys, shutil, datetime, json, zipfile
 from natsort import natsorted
 
-title = "Libra 2022.0301"
+title = "Libra 2022.0301-1"
 
-try:
-    config = json.load(open("config.json"))
-except FileNotFoundError:
-    print("Config does not exist. Using default settings")
-    config = {
-        "keybinds": [
-            "q",
-            "w",
-            "LEFTBRACKET",
-            "RIGHTBRACKET"
-        ],
-        "ar": 1.7,
-        "noteOffset": 0,
-        "fps": 144,
-        "hitwindow": [
-            135,
-            90,
-            22
-        ],
-        "hitColors": [
-            [255,0,0],
-            [255,0,255],
-            [100,255,100],
-            [255,255,0]
-        ],
-        "colors": [
-            [171,171,171],
-            [3,116,170],
-            [3,116,170],
-            [171,171,171]
-        ]
-    }
+def configReload():
+    while True:
+        try:
+            config = json.load(open("config.json"))
+            break
+        except FileNotFoundError:
+            print("Config does not exist. Writing default")
+            data = """{
+    "keybinds": [
+        "q",
+        "w",
+        "LEFTBRACKET",
+        "RIGHTBRACKET"
+    ],
+    "ar": 1.7,
+    "noteOffset": 0,
+    "fps": 144,
+    "mods": {
+        "mirror": "false",
+        "hardrock": "false"
+    },
+    "scores": "true",
+    "hitwindow": [
+        135,
+        90,
+        22
+    ],
+    "hitColors": [
+        [255,0,0],
+        [255,0,255],
+        [100,255,100],
+        [255,255,0]
+    ],
+    "colors": [
+        [171,171,171],
+        [3,116,170],
+        [3,116,170],
+        [171,171,171]
+    ]
+}"""
+            open("config.json", "w").write(data)
+            continue
+    if config["mods"]["hardrock"].lower()=="true":
+        for i in range(len(config["hitwindow"])): config["hitwindow"][i] = config["hitwindow"][i]//1.5
+    return config
 
 pygame.display.set_caption(title)
 pygame.font.init()
-pygame.mixer.init(44100)
+pygame.mixer.init()
 
 size = (1200, 900)
 screen = pygame.display.set_mode(size)
@@ -57,7 +70,7 @@ def padding(score, max):
     ret = str(math.floor(score))
     return "0" * (max - len(ret)) + ret
 
-def parseMap(map):
+def parseMap(map, config):
     if os.path.exists("maps/"+map+"/map.osu")==True:
         mapdata = open("maps/"+map+"/map.osu", "r", encoding="utf-8").read().split("\n")
         type = "osu"
@@ -68,10 +81,12 @@ def parseMap(map):
         if type=="osu":
             if hitObjects==True:
                 splitted = mapline.split(",")
+                noteRow = int((int(splitted[0])*4)/512)
+                if config["mods"]["mirror"].lower()=="true": noteRow = abs(noteRow-3)
                 if int(splitted[5].split(":")[0])<2:
-                    converted.append([int(splitted[2]), int((int(splitted[0])*4)/512)])
+                    converted.append([int(splitted[2]), noteRow])
                 else:
-                    converted.append([int(splitted[2]), int((int(splitted[0])*4)/512), int(splitted[5].split(":")[0]), False, 0])
+                    converted.append([int(splitted[2]), noteRow, int(splitted[5].split(":")[0]), False, 0])
             else:
                 if mapline=="[HitObjects]":
                     hitObjects = True
@@ -108,16 +123,20 @@ def importMaps():
                                 oszfile.extract(audiofile, "maps/"+diff[:-4]+"/")
                 os.remove(os.path.join('maps/', dir))
 
-def saveScore(name, curScore, hitCount, accuracy):
-    data = f"""
-Libra - {name}
+def saveScore(name, curScore, hitCount, accuracy, config):
+    mods = []
+    for i in config["mods"]:
+        if config["mods"][i].lower()=="true":
+            mods.append(i)
+    if mods==[]: mods = ""
+    data = f"""Libra - {name}
+Mods: {' '.join(mods)}
 Perfect: {hitCount['perfect']} 
 Good: {hitCount['good']}
 Bad: {hitCount['bad']}
 Miss: {hitCount['miss']}
 Accuracy: {accuracy}
-Score: {padding(curScore, 7)}
-    """
+Score: {padding(curScore, 7)}"""
     try:
         os.listdir('scores')
     except FileNotFoundError:
@@ -151,6 +170,7 @@ def main():
         files = []
     importMaps()
     maps = reloadMaps()
+    config = configReload()
     while True:
         screen.fill(BLACK)
         for i in range(len(keysPressed)):
@@ -206,6 +226,7 @@ def main():
                 elif event.key==pygame.K_r:
                     importMaps()
                     maps = reloadMaps()
+                    config = configReload()
                 elif event.key == pygame.K_RETURN and not isPlaying:
                     if maps==[]: continue # no maps error fix
                     if os.path.exists("maps/"+maps[selectedMapIndex]+"/map.osu"):
@@ -217,7 +238,7 @@ def main():
                     pygame.mixer.music.play()
                     pygame.mixer.music.pause()
  
-                    loadedMap = parseMap(maps[selectedMapIndex])
+                    loadedMap = parseMap(maps[selectedMapIndex], config)
                     
                     for i in range(20):
                         loadedObjects.append(loadedMap.pop(0))
@@ -248,7 +269,8 @@ def main():
         if isPlaying and playingFrame + 1000 < pygame.time.get_ticks():
             if len(loadedObjects) == 0:
                 isPlaying = False
-                saveScore(maps[selectedMapIndex], curScore, hitCount, accuracy)
+                if config["scores"].lower()=="true":
+                    saveScore(maps[selectedMapIndex], curScore, hitCount, accuracy, config)
                 loadedObjects = []
                 keysDown = [False, False, False, False]
                 keysPressed = [False, False, False, False]
