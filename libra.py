@@ -4,7 +4,7 @@ environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame, math, os, sys, shutil, datetime, json, zipfile
 from natsort import natsorted
 
-title = "Libra 2022.0301-1"
+title = "Libra 2022.0301-2"
 
 def configReload():
     while True:
@@ -25,6 +25,7 @@ def configReload():
     "fps": 144,
     "mods": {
         "mirror": "false",
+        "suddenDeath": "false",
         "hardrock": "false"
     },
     "scores": "true",
@@ -164,7 +165,7 @@ def main():
     }
     hit = ""
     try:
-        files = os.listdir('maps/')
+        os.listdir('maps/')
     except FileNotFoundError:
         os.mkdir('maps')
         files = []
@@ -190,6 +191,22 @@ def main():
             else:
                 selectingMapsCooldown += 1
         
+        if config["mods"]["suddenDeath"].lower()=="true" and hitCount["miss"]>0:
+            isPlaying = False
+            loadedObjects = []
+            keysDown = [False, False, False, False]
+            keysPressed = [False, False, False, False]
+            combo = 0
+            curScore = 0.0
+            hitCount = {
+                "perfect": 0,
+                "good": 0,
+                "bad": 0,
+                "miss": 0
+            }
+            hit = ""
+            pygame.mixer.music.stop()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
