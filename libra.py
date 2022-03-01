@@ -1,8 +1,10 @@
 #!/bin/python3
 from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-import pygame, math, os, sys, shutil, json, zipfile
+import pygame, math, os, sys, shutil, datetime, json, zipfile
 from natsort import natsorted
+
+title = "Libra 2022.0301"
 
 try:
     config = json.load(open("config.json"))
@@ -36,7 +38,6 @@ except FileNotFoundError:
             [171,171,171]
         ]
     }
-title = "Libra 2022.0228-2"
 
 pygame.display.set_caption(title)
 pygame.font.init()
@@ -106,6 +107,22 @@ def importMaps():
                                 if audiofile[0]==" ": audiofile = audiofile[1:]
                                 oszfile.extract(audiofile, "maps/"+diff[:-4]+"/")
                 os.remove(os.path.join('maps/', dir))
+
+def saveScore(name, curScore, hitCount, accuracy):
+    data = f"""
+Libra - {name}
+Perfect: {hitCount['perfect']} 
+Good: {hitCount['good']}
+Bad: {hitCount['bad']}
+Miss: {hitCount['miss']}
+Accuracy: {accuracy}
+Score: {padding(curScore, 7)}
+    """
+    try:
+        os.listdir('scores')
+    except FileNotFoundError:
+        os.mkdir("scores")
+    open("scores/"+name+f" ({datetime.datetime.today().strftime('%Y-%m-%d(%H:%M)')}).scr", "w").write(data)
 
 def main():
     loadedMap = []
@@ -231,6 +248,7 @@ def main():
         if isPlaying and playingFrame + 1000 < pygame.time.get_ticks():
             if len(loadedObjects) == 0:
                 isPlaying = False
+                saveScore(maps[selectedMapIndex], curScore, hitCount, accuracy)
                 loadedObjects = []
                 keysDown = [False, False, False, False]
                 keysPressed = [False, False, False, False]
