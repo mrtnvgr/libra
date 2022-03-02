@@ -9,11 +9,18 @@
     "noteOffset": 0,
     "fps": 144,
     "mods": {
-        "mirror": "false",
-		"suddenDeath": "false",
-        "hardrock": "false"
+        "suddenDeath": "false",
+        "hardrock": "false",
+        "mirror": "false"
     },
     "scores": "true",
+    "backgrounds": {
+        "userBackgrounds": {
+            "mapSelection": "",
+            "gameplay": ""
+        },
+        "mapBackground": "false"
+    },
     "hitwindow": [
         135,
         90,
@@ -30,5 +37,6 @@
         [3,116,170],
         [3,116,170],
         [171,171,171]
-    ]
+    ],
+    "autoUpdate": "true"
 }

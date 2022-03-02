@@ -1,10 +1,13 @@
 #!/bin/python3
 from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-import pygame, math, os, sys, shutil, datetime, json, zipfile
+import pygame, math, os, sys, requests, shutil, datetime, json, zipfile
 from natsort import natsorted
 
-title = "Libra 2022.0301-2"
+GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
+GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
+version = "2022.0302"
+title = "Libra " + version
 
 def configReload():
     while True:
@@ -24,11 +27,18 @@ def configReload():
     "noteOffset": 0,
     "fps": 144,
     "mods": {
-        "mirror": "false",
         "suddenDeath": "false",
-        "hardrock": "false"
+        "hardrock": "false",
+        "mirror": "false"
     },
     "scores": "true",
+    "backgrounds": {
+        "userBackgrounds": {
+            "mapSelection": "",
+            "gameplay": ""
+        },
+        "mapBackground": "false"
+    },
     "hitwindow": [
         135,
         90,
@@ -45,13 +55,16 @@ def configReload():
         [3,116,170],
         [3,116,170],
         [171,171,171]
-    ]
+    ],
+    "autoUpdate": "true"
 }"""
             open("config.json", "w").write(data)
             continue
     if config["mods"]["hardrock"].lower()=="true":
         for i in range(len(config["hitwindow"])): config["hitwindow"][i] = config["hitwindow"][i]//1.5
     return config
+config = configReload()
+
 
 pygame.display.set_caption(title)
 pygame.font.init()
@@ -67,6 +80,20 @@ font = pygame.font.SysFont('Arial', 25)
 fontBold = pygame.font.SysFont('Arial', 25, bold=True)
 fontScore = pygame.font.SysFont('Arial', 60)
 
+# check updates
+if config["autoUpdate"].lower()=="true":
+    remote_version = requests.get(GIT_API_URL).json()["name"]
+    if remote_version!=version:
+        screen.blit(fontBold.render(title, True, WHITE), (0,0))
+        screen.blit(fontBold.render("Updating...", True, WHITE), (0,20))
+        pygame.display.flip()
+        if os.name=="nt":
+            os_prefix = ".exe"
+        else:
+            os_prefix = ""
+        open("libra("+remote_version+")"+os_prefix, "wb").write(requests.get(GIT_RELEASE_URL+os_prefix, stream=True).content)
+        sys.exit(0)
+
 def padding(score, max):
     ret = str(math.floor(score))
     return "0" * (max - len(ret)) + ret
@@ -77,9 +104,12 @@ def parseMap(map, config):
         type = "osu"
     mapdata = [value for value in mapdata if value]
     hitObjects = False
+    background = ""
     converted = []
     for mapline in mapdata:
         if type=="osu":
+            if config["backgrounds"]["mapBackground"].lower()=="true":
+                if "png" in mapline or "jpg" in mapline: background = mapline.split('"')[1]
             if hitObjects==True:
                 splitted = mapline.split(",")
                 noteRow = int((int(splitted[0])*4)/512)
@@ -91,7 +121,7 @@ def parseMap(map, config):
             else:
                 if mapline=="[HitObjects]":
                     hitObjects = True
-    return converted
+    return [converted, background]
 
 def reloadMaps():
     files = os.listdir('maps/')
@@ -105,8 +135,8 @@ def importMaps():
     files = os.listdir('maps/')
     for dir in files:
             if ".osz" in dir:
-                screen.blit(font.render(title, True, WHITE), (0,0))
-                screen.blit(font.render("Unzipping...", True, WHITE), (0,20))
+                screen.blit(fontBold.render(title, True, WHITE), (0,0))
+                screen.blit(fontBold.render("Unzipping...", True, WHITE), (0,20))
                 pygame.display.flip()
                 oszfile = zipfile.ZipFile(os.path.join('maps/', dir))
                 for diff in oszfile.namelist():
@@ -122,6 +152,9 @@ def importMaps():
                                 audiofile = osuline.replace("AudioFilename:", "")
                                 if audiofile[0]==" ": audiofile = audiofile[1:]
                                 oszfile.extract(audiofile, "maps/"+diff[:-4]+"/")
+                            elif "jpg" in osuline or "png" in osuline:
+                                oszfile.extract(osuline.split(",")[2].replace('"', ""), "maps/"+diff[:-4]+"/")
+                oszfile.close()
                 os.remove(os.path.join('maps/', dir))
 
 def saveScore(name, curScore, hitCount, accuracy, config):
@@ -130,7 +163,7 @@ def saveScore(name, curScore, hitCount, accuracy, config):
         if config["mods"][i].lower()=="true":
             mods.append(i)
     if mods==[]: mods = ""
-    data = f"""Libra - {name}
+    data = f"""{name}
 Mods: {' '.join(mods)}
 Perfect: {hitCount['perfect']} 
 Good: {hitCount['good']}
@@ -168,12 +201,19 @@ def main():
         os.listdir('maps/')
     except FileNotFoundError:
         os.mkdir('maps')
-        files = []
     importMaps()
     maps = reloadMaps()
     config = configReload()
+    background = ""
+    if config["backgrounds"]["userBackgrounds"]["mapSelection"]!="": mapSelectionBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["mapSelection"])
+    if config["backgrounds"]["userBackgrounds"]["gameplay"]!="": gameplayBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["gameplay"])
     while True:
         screen.fill(BLACK)
+        if config["backgrounds"]["userBackgrounds"]["mapSelection"]!="" and isPlaying==False:
+            screen.blit(mapSelectionBg, mapSelectionBg.get_rect())
+        elif config["backgrounds"]["userBackgrounds"]["gameplay"]!="" and isPlaying:
+            screen.blit(gameplayBg, gameplayBg.get_rect())
+        if config["backgrounds"]["mapBackground"]=="true" and background!="" and isPlaying: screen.blit(backgroundBg, backgroundBg.get_rect())
         for i in range(len(keysPressed)):
             keysPressed[i] = False
             keysReleased[i] = False
@@ -255,8 +295,10 @@ def main():
                     pygame.mixer.music.play()
                     pygame.mixer.music.pause()
  
-                    loadedMap = parseMap(maps[selectedMapIndex], config)
-                    
+                    loadedFile = parseMap(maps[selectedMapIndex], config)
+                    loadedMap = loadedFile[0]
+                    background = loadedFile[1]
+                    if background!="": backgroundBg = pygame.transform.scale(pygame.image.load("maps/"+maps[selectedMapIndex]+"/"+background), (1280, 920))
                     for i in range(20):
                         loadedObjects.append(loadedMap.pop(0))
                     isPlaying = True
