@@ -6,7 +6,7 @@ from natsort import natsorted
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0302"
+version = "2022.0302-1"
 title = "Libra " + version
 
 def configReload():
@@ -17,6 +17,7 @@ def configReload():
         except FileNotFoundError:
             print("Config does not exist. Writing default")
             data = """{
+    "resolution": [1280,920],
     "keybinds": [
         "q",
         "w",
@@ -70,8 +71,7 @@ pygame.display.set_caption(title)
 pygame.font.init()
 pygame.mixer.init()
 
-size = (1200, 900)
-screen = pygame.display.set_mode(size)
+screen = pygame.display.set_mode(tuple(config["resolution"]))
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -298,7 +298,7 @@ def main():
                     loadedFile = parseMap(maps[selectedMapIndex], config)
                     loadedMap = loadedFile[0]
                     background = loadedFile[1]
-                    if background!="": backgroundBg = pygame.transform.scale(pygame.image.load("maps/"+maps[selectedMapIndex]+"/"+background), (1280, 920))
+                    if background!="": backgroundBg = pygame.transform.scale(pygame.image.load("maps/"+maps[selectedMapIndex]+"/"+background), tuple(config["resolution"]))
                     for i in range(20):
                         loadedObjects.append(loadedMap.pop(0))
                     isPlaying = True
@@ -321,10 +321,10 @@ def main():
         for i in range(len(keysDown)):
             if isPlaying:
                 if keysDown[i]:
-                    pygame.draw.circle(screen, config["colors"][i], (390 + i * 140, 800), 60, 5)
-                    pygame.draw.circle(screen, config["colors"][i], (390 + i * 140, 800), 60) 
+                    pygame.draw.circle(screen, config["colors"][i], ((config["resolution"][0]/2)-250 + i * 140, config["resolution"][1]-100), 60, 5)
+                    pygame.draw.circle(screen, config["colors"][i], ((config["resolution"][0]/2)-250 + i * 140, config["resolution"][1]-100), 60) 
                 else:
-                    pygame.draw.circle(screen, WHITE, (390 + i * 140, 800), 60, 5)
+                    pygame.draw.circle(screen, WHITE, ((config["resolution"][0]/2)-250 + i * 140, config["resolution"][1]-100), 60, 5)
         if isPlaying and playingFrame + 1000 < pygame.time.get_ticks():
             if len(loadedObjects) == 0:
                 isPlaying = False
@@ -355,31 +355,29 @@ def main():
                                 break
                 if len(obj) == 5:
                     if not obj[3]:
-                        pygame.draw.circle(screen, config["colors"][obj[1]], (390 + obj[1] * 140, 800 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]), 60 )
-                    pygame.draw.circle(screen, config["colors"][obj[1]], (390 + obj[1] * 140, 800 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]), 60 )
-                    rect1 = 330 + obj[1] * 140
-                    rect2 = 800 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]
+                        pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-250 + obj[1] * 140,config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]), 60 )
+                    pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-250 + obj[1] * 140,config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]), 60 )
+                    rect1 = (config["resolution"][0]/2)-310 + obj[1] * 140
+                    rect2 = config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]
                     rect3 = 120
                     if not obj[3]:
-                        rect4 = (800 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]) - rect2
+                        rect4 = (config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]) - rect2
                     else:
                         rect4 = (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]
                     pygame.draw.rect(screen, config["colors"][obj[1]], pygame.Rect(rect1, rect2, rect3, rect4))
                     
-                    if 800 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"] > 960:
+                    if config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"] > config["resolution"][0]-300:
                         hit = "miss"
-                        hitMarker = pygame.time.get_ticks()
                         hitCount[hit] += 1
                         unloadedObjects.remove(obj)
                         if len(loadedMap) != 0:
                             unloadedObjects.append(loadedMap.pop(0))
                 else:
-                    pygame.draw.circle(screen, tuple(config["colors"][obj[1]]), (390 + obj[1] * 140, 800 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]), 60 )
+                    pygame.draw.circle(screen, tuple(config["colors"][obj[1]]), ((config["resolution"][0]/2)-250 + obj[1] * 140, config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]), 60 )
 
                     # if the circle passes the visible point
-                    if 800 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"] > 960:
+                    if config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"] > config["resolution"][0]-300:
                         hit = "miss"
-                        hitMarker = pygame.time.get_ticks()
                         hitCount[hit] += 1
                         unloadedObjects.remove(obj)
                         if len(loadedMap) != 0:
@@ -394,7 +392,6 @@ def main():
                             unObj[3] = True
                             unObj[4] = abs(obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame))
                         else:
-                            hitMarker = pygame.time.get_ticks()
                             hitDifference = abs(obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame))
                             if hitDifference > config["hitwindow"][0]:
                                 hit = "miss"
@@ -424,7 +421,6 @@ def main():
                         obj = loadedLaneObjects[i][0]
 
                         if len(obj) == 5 and obj[3]:
-                            hitMarker = pygame.time.get_ticks()
                             hitDifference = max(obj[4], abs(obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)))
                             if hitDifference > config["hitwindow"][0]:
                                 hit = "miss"
@@ -458,32 +454,32 @@ def main():
                     hitColor = config["hitColors"][2]
                 elif hit=="perfect":
                     hitColor = config["hitColors"][3]
-                screen.blit(fontBold.render(hit, True, hitColor), (580 - hitWidth / 2, 640))
+                screen.blit(fontBold.render(hit, True, hitColor), ((config["resolution"][0]/2)-50 - hitWidth / 2, config["resolution"][1]-280))
             loadedObjects = unloadedObjects
 
         if isPlaying and playingFrame + 2000 + config["noteOffset"] < pygame.time.get_ticks():
             pygame.mixer.music.unpause()
         
         if isPlaying==True:
-            screen.blit(fontBold.render("Perfect: ", True, config["hitColors"][3]), (950, 625))
-            screen.blit(fontBold.render("Good: ", True, config["hitColors"][2]), (973, 650))
-            screen.blit(fontBold.render("Bad: ", True, config["hitColors"][1]), (990, 675))
-            screen.blit(fontBold.render("Miss: ", True, config["hitColors"][0]), (981, 700))
-            screen.blit(font.render(f"{padding(hitCount['perfect'], 4)}", True, WHITE), (1050, 625))
-            screen.blit(font.render(f"{padding(hitCount['good'], 4)}", True, WHITE), (1050, 650))
-            screen.blit(font.render(f"{padding(hitCount['bad'], 4)}", True, WHITE), (1050, 675))
-            screen.blit(font.render(f"{padding(hitCount['miss'], 4)}", True, WHITE), (1050, 700))
-            screen.blit(font.render('Score', True, WHITE), (920, 850))
-            screen.blit(fontScore.render(padding(curScore, 7), True, WHITE), (920, 800))
-            screen.blit(fontScore.render(str(combo), True, WHITE), (0,800))
-            screen.blit(font.render('Combo', True, WHITE), (0, 850))
+            screen.blit(fontBold.render("Perfect: ", True, config["hitColors"][3]), (config["resolution"][0]-180, config["resolution"][1]-295))
+            screen.blit(fontBold.render("Good: ", True, config["hitColors"][2]), (config["resolution"][0]-157, config["resolution"][1]-270))
+            screen.blit(fontBold.render("Bad: ", True, config["hitColors"][1]), (config["resolution"][0]-140, config["resolution"][1]-245))
+            screen.blit(fontBold.render("Miss: ", True, config["hitColors"][0]), (config["resolution"][0]-149, config["resolution"][1]-220))
+            screen.blit(font.render(f"{padding(hitCount['perfect'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-295))
+            screen.blit(font.render(f"{padding(hitCount['good'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-270))
+            screen.blit(font.render(f"{padding(hitCount['bad'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-245))
+            screen.blit(font.render(f"{padding(hitCount['miss'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-220))
+            screen.blit(font.render('Score', True, WHITE), (config["resolution"][0]-230, config["resolution"][1]-35))
+            screen.blit(fontScore.render(padding(curScore, 7), True, WHITE), (config["resolution"][0]-230, config["resolution"][1]-85))
+            screen.blit(fontScore.render(str(combo), True, WHITE), (0,config["resolution"][1]-85))
+            screen.blit(font.render('Combo', True, WHITE), (0, config["resolution"][1]-35))
             screen.blit(font.render(maps[selectedMapIndex], True, WHITE), (0,0))
             totalObjects = hitCount['miss']+hitCount['bad']+hitCount['good']+hitCount['perfect']
             if totalObjects!=0:
                 accuracy = int(100*((50*hitCount['bad'])+(100*hitCount['good'])+(300*(hitCount['perfect']+totalObjects)) )/( 300*(hitCount['bad']+hitCount['good']+hitCount['perfect']+hitCount["miss"]+totalObjects)))
             else:
                 accuracy = "100"
-            screen.blit(fontScore.render(str(accuracy)+"%", True, WHITE), (0, 30))
+            screen.blit(fontScore.render(str(accuracy)+"%", True, WHITE), (0, 20))
             screen.blit(font.render("Accuracy", True, WHITE), (0, 80))
         else:
             screen.blit(fontBold.render(title, True, WHITE), (0,0))
