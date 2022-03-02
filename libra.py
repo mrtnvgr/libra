@@ -6,7 +6,7 @@ from natsort import natsorted
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0302-1"
+version = "2022.0302-2"
 title = "Libra " + version
 
 def configReload():
@@ -17,8 +17,9 @@ def configReload():
         except FileNotFoundError:
             print("Config does not exist. Writing default")
             data = """{
-    "resolution": [1280,920],
-    "keybinds": [
+    "resolution": [1920,1080],
+    "fullscreen": "false",
+	"keybinds": [
         "q",
         "w",
         "LEFTBRACKET",
@@ -26,7 +27,7 @@ def configReload():
     ],
     "ar": 1.7,
     "noteOffset": 0,
-    "fps": 144,
+    "fps": 360,
     "mods": {
         "suddenDeath": "false",
         "hardrock": "false",
@@ -71,7 +72,10 @@ pygame.display.set_caption(title)
 pygame.font.init()
 pygame.mixer.init()
 
-screen = pygame.display.set_mode(tuple(config["resolution"]))
+flags = 0
+if config["fullscreen"].lower()=="true":
+    flags = flags | pygame.FULLSCREEN
+screen = pygame.display.set_mode(tuple(config["resolution"]), flags)
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -217,17 +221,16 @@ def main():
         for i in range(len(keysPressed)):
             keysPressed[i] = False
             keysReleased[i] = False
-        
+        if selectedMapIndex<0:
+            selectedMapIndex = len(maps)-1
+        elif selectedMapIndex==len(maps):
+            selectedMapIndex = 0
         if selectingMaps!="":
-            if selectingMapsCooldown==20:
+            if selectingMapsCooldown==(config["fps"]//12):
                 if selectingMaps=="down":
                     selectedMapIndex += 1
                 elif selectingMaps=="up":
                     selectedMapIndex -= 1
-                if selectedMapIndex==-1:
-                    selectedMapIndex = len(maps) - 1
-                elif selectedMapIndex==len(maps):
-                    selectedMapIndex = 0
             else:
                 selectingMapsCooldown += 1
         

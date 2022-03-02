@@ -1,6 +1,7 @@
 {
-    "resolution": [1280,920],
-    "keybinds": [
+    "resolution": [1920,1080],
+    "fullscreen": "false",
+	"keybinds": [
         "q",
         "w",
         "LEFTBRACKET",
@@ -8,7 +9,7 @@
     ],
     "ar": 1.7,
     "noteOffset": 0,
-    "fps": 144,
+    "fps": 360,
     "mods": {
         "suddenDeath": "false",
         "hardrock": "false",
