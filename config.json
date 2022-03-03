@@ -7,7 +7,8 @@
         "LEFTBRACKET",
         "RIGHTBRACKET"
     ],
-    "ar": 1.7,
+    "circleSpeed": 1.9,
+    "circleSize": 1.1,
     "noteOffset": 0,
     "fps": 360,
     "mods": {

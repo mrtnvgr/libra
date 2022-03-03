@@ -6,7 +6,7 @@ from natsort import natsorted
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0302-2"
+version = "2022.0303"
 title = "Libra " + version
 
 def configReload():
@@ -25,7 +25,8 @@ def configReload():
         "LEFTBRACKET",
         "RIGHTBRACKET"
     ],
-    "ar": 1.7,
+    "circleSpeed": 1.9,
+    "circleSize": 1.1,
     "noteOffset": 0,
     "fps": 360,
     "mods": {
@@ -148,7 +149,7 @@ def importMaps():
                         oszfile.extract(diff, "maps/"+diff[:-4])
                         try:
                             os.rename("maps/"+diff[:-4]+"/"+diff, "maps/"+diff[:-4]+"/map.osu")
-                        except FileExistsError: # windows fix bruh
+                        except FileExistsError:
                             pass
                         osufile = open("maps/"+diff[:-4]+"/map.osu", encoding="utf-8").read().split("\n")
                         for osuline in osufile:
@@ -288,7 +289,7 @@ def main():
                     maps = reloadMaps()
                     config = configReload()
                 elif event.key == pygame.K_RETURN and not isPlaying:
-                    if maps==[]: continue # no maps error fix
+                    if maps==[]: continue 
                     if os.path.exists("maps/"+maps[selectedMapIndex]+"/map.osu"):
                         for line in open("maps/"+maps[selectedMapIndex]+"/map.osu", encoding="utf-8").read().split("\n"):
                             if "AudioFilename" in line:
@@ -324,10 +325,10 @@ def main():
         for i in range(len(keysDown)):
             if isPlaying:
                 if keysDown[i]:
-                    pygame.draw.circle(screen, config["colors"][i], ((config["resolution"][0]/2)-250 + i * 140, config["resolution"][1]-100), 60, 5)
-                    pygame.draw.circle(screen, config["colors"][i], ((config["resolution"][0]/2)-250 + i * 140, config["resolution"][1]-100), 60) 
+                    pygame.draw.circle(screen, config["colors"][i], ((config["resolution"][0]/2)-250 + i * int(140*config["circleSize"]), config["resolution"][1]-100), int(60*config["circleSize"]), 5)
+                    pygame.draw.circle(screen, config["colors"][i], ((config["resolution"][0]/2)-250 + i * int(140*config["circleSize"]), config["resolution"][1]-100), int(60*config["circleSize"]))
                 else:
-                    pygame.draw.circle(screen, WHITE, ((config["resolution"][0]/2)-250 + i * 140, config["resolution"][1]-100), 60, 5)
+                    pygame.draw.circle(screen, WHITE, ((config["resolution"][0]/2)-250 + i * int(140*config["circleSize"]), config["resolution"][1]-100), int(60*config["circleSize"]), 5)
         if isPlaying and playingFrame + 1000 < pygame.time.get_ticks():
             if len(loadedObjects) == 0:
                 isPlaying = False
@@ -358,28 +359,28 @@ def main():
                                 break
                 if len(obj) == 5:
                     if not obj[3]:
-                        pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-250 + obj[1] * 140,config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]), 60 )
-                    pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-250 + obj[1] * 140,config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]), 60 )
-                    rect1 = (config["resolution"][0]/2)-310 + obj[1] * 140
-                    rect2 = config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]
-                    rect3 = 120
+                        pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-250 + obj[1] * int(140*config["circleSize"]),config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]), int(60*config["circleSize"]) )
+                    pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-250 + obj[1] * int(140*config["circleSize"]),config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]), int(60*config["circleSize"]) )
+                    rect1 = (config["resolution"][0]/2)-310-(6*int(config["circleSize"]%1*10)) + obj[1] * int(140*config["circleSize"])
+                    rect2 = config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]
+                    rect3 = (120*config["circleSize"])
                     if not obj[3]:
-                        rect4 = (config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]) - rect2
+                        rect4 = (config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]) - rect2
                     else:
-                        rect4 = (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]
+                        rect4 = (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]
                     pygame.draw.rect(screen, config["colors"][obj[1]], pygame.Rect(rect1, rect2, rect3, rect4))
                     
-                    if config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"] > config["resolution"][0]-300:
+                    if config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"] > config["resolution"][0]-300:
                         hit = "miss"
                         hitCount[hit] += 1
                         unloadedObjects.remove(obj)
                         if len(loadedMap) != 0:
                             unloadedObjects.append(loadedMap.pop(0))
                 else:
-                    pygame.draw.circle(screen, tuple(config["colors"][obj[1]]), ((config["resolution"][0]/2)-250 + obj[1] * 140, config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"]), 60 )
+                    pygame.draw.circle(screen, tuple(config["colors"][obj[1]]), ((config["resolution"][0]/2)-250 + obj[1] * int(140*config["circleSize"]), config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]), int(60*config["circleSize"]) )
 
                     # if the circle passes the visible point
-                    if config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["ar"] > config["resolution"][0]-300:
+                    if config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"] > config["resolution"][0]-300:
                         hit = "miss"
                         hitCount[hit] += 1
                         unloadedObjects.remove(obj)
@@ -459,10 +460,10 @@ def main():
                     hitColor = config["hitColors"][3]
                 screen.blit(fontBold.render(hit, True, hitColor), ((config["resolution"][0]/2)-50 - hitWidth / 2, config["resolution"][1]-280))
             loadedObjects = unloadedObjects
-
+        
         if isPlaying and playingFrame + 2000 + config["noteOffset"] < pygame.time.get_ticks():
             pygame.mixer.music.unpause()
-        
+
         if isPlaying==True:
             screen.blit(fontBold.render("Perfect: ", True, config["hitColors"][3]), (config["resolution"][0]-180, config["resolution"][1]-295))
             screen.blit(fontBold.render("Good: ", True, config["hitColors"][2]), (config["resolution"][0]-157, config["resolution"][1]-270))
@@ -484,6 +485,13 @@ def main():
                 accuracy = "100"
             screen.blit(fontScore.render(str(accuracy)+"%", True, WHITE), (0, 20))
             screen.blit(font.render("Accuracy", True, WHITE), (0, 80))
+            mods = []
+            length = 0
+            for i in config["mods"]:
+                if config["mods"][i].lower()=="true":
+                    mods.append(i)
+                    length = length+len(i)
+            if mods!=[]: screen.blit(font.render("Mods: " + ' '.join(mods), True, WHITE), (config["resolution"][0]-(length*25), 0))
         else:
             screen.blit(fontBold.render(title, True, WHITE), (0,0))
             screen.blit(fontBold.render("Maps:", True, WHITE), (0,20))
