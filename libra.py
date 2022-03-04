@@ -6,7 +6,7 @@ from natsort import natsorted
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0303"
+version = "2022.0304"
 title = "Libra " + version
 
 def configReload():
@@ -68,7 +68,6 @@ def configReload():
     return config
 config = configReload()
 
-
 pygame.display.set_caption(title)
 pygame.font.init()
 pygame.mixer.init()
@@ -87,7 +86,11 @@ fontScore = pygame.font.SysFont('Arial', 60)
 
 # check updates
 if config["autoUpdate"].lower()=="true":
-    remote_version = requests.get(GIT_API_URL).json()["name"]
+    try:
+        remote_version = requests.get(GIT_API_URL).json()["name"]
+    except:
+        print("No internet connection!")
+        remote_version = version
     if remote_version!=version:
         screen.blit(fontBold.render(title, True, WHITE), (0,0))
         screen.blit(fontBold.render("Updating...", True, WHITE), (0,20))
@@ -162,7 +165,7 @@ def importMaps():
                 oszfile.close()
                 os.remove(os.path.join('maps/', dir))
 
-def saveScore(name, curScore, hitCount, accuracy, config):
+def saveScore(name, curScore, hitCount, accuracy, maxCombo, config):
     mods = []
     for i in config["mods"]:
         if config["mods"][i].lower()=="true":
@@ -175,6 +178,7 @@ Good: {hitCount['good']}
 Bad: {hitCount['bad']}
 Miss: {hitCount['miss']}
 Accuracy: {accuracy}
+Combo: {maxCombo}
 Score: {padding(curScore, 7)}"""
     try:
         os.listdir('scores')
@@ -194,6 +198,7 @@ def main():
     isPlaying = False
     playingFrame = 0
     combo = 0
+    maxCombo = 0
     curScore = 0.0
     hitCount = {
         'perfect': 0,
@@ -240,6 +245,7 @@ def main():
             loadedObjects = []
             keysDown = [False, False, False, False]
             keysPressed = [False, False, False, False]
+            maxCombo = 0
             combo = 0
             curScore = 0.0
             hitCount = {
@@ -263,6 +269,7 @@ def main():
                         keysPressed = [False, False, False, False]
                         keysReleased = [False, False, False, False]
                         combo = 0
+                        maxCombo = 0
                         curScore = 0.0
                         hitCount = {
                             "perfect": 0,
@@ -281,7 +288,7 @@ def main():
                 elif (event.key == pygame.K_UP or event.key==pygame.K_w) and not isPlaying:
                     selectedMapIndex -= 1
                     selectingMaps = "up"
-                elif event.key==pygame.K_DELETE:
+                elif event.key==pygame.K_DELETE and not isPlaying:
                     shutil.rmtree("maps/"+maps[selectedMapIndex], ignore_errors=True)
                     maps = reloadMaps()
                 elif event.key==pygame.K_r:
@@ -333,12 +340,13 @@ def main():
             if len(loadedObjects) == 0:
                 isPlaying = False
                 if config["scores"].lower()=="true":
-                    saveScore(maps[selectedMapIndex], curScore, hitCount, accuracy, config)
+                    saveScore(maps[selectedMapIndex], curScore, hitCount, accuracy, maxCombo, config)
                 loadedObjects = []
                 keysDown = [False, False, False, False]
                 keysPressed = [False, False, False, False]
                 keysReleased = [False, False, False, False]
                 combo = 0
+                maxCombo = 0
                 curScore = 0.0
                 hitCount = {
                     "perfect": 0,
@@ -464,6 +472,8 @@ def main():
         if isPlaying and playingFrame + 2000 + config["noteOffset"] < pygame.time.get_ticks():
             pygame.mixer.music.unpause()
 
+        if maxCombo<combo: maxCombo = combo
+
         if isPlaying==True:
             screen.blit(fontBold.render("Perfect: ", True, config["hitColors"][3]), (config["resolution"][0]-180, config["resolution"][1]-295))
             screen.blit(fontBold.render("Good: ", True, config["hitColors"][2]), (config["resolution"][0]-157, config["resolution"][1]-270))
@@ -475,8 +485,7 @@ def main():
             screen.blit(font.render(f"{padding(hitCount['miss'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-220))
             screen.blit(font.render('Score', True, WHITE), (config["resolution"][0]-230, config["resolution"][1]-35))
             screen.blit(fontScore.render(padding(curScore, 7), True, WHITE), (config["resolution"][0]-230, config["resolution"][1]-85))
-            screen.blit(fontScore.render(str(combo), True, WHITE), (0,config["resolution"][1]-85))
-            screen.blit(font.render('Combo', True, WHITE), (0, config["resolution"][1]-35))
+            screen.blit(fontScore.render(str(combo)+"x", True, WHITE), (0,config["resolution"][1]-85))
             screen.blit(font.render(maps[selectedMapIndex], True, WHITE), (0,0))
             totalObjects = hitCount['miss']+hitCount['bad']+hitCount['good']+hitCount['perfect']
             if totalObjects!=0:
