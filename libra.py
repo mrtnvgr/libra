@@ -3,10 +3,11 @@ from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame, math, os, sys, requests, shutil, datetime, json, zipfile
 from natsort import natsorted
+from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0304"
+version = "2022.0305"
 title = "Libra " + version
 
 def configReload():
@@ -295,6 +296,8 @@ def main():
                     importMaps()
                     maps = reloadMaps()
                     config = configReload()
+                elif event.key==pygame.K_F2:
+                    selectedMapIndex = randint(0, len(maps))
                 elif event.key == pygame.K_RETURN and not isPlaying:
                     if maps==[]: continue 
                     if os.path.exists("maps/"+maps[selectedMapIndex]+"/map.osu"):
