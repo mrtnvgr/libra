@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0305"
+version = "2022.0305-1"
 title = "Libra " + version
 
 def configReload():
@@ -372,7 +372,11 @@ def main():
                     if not obj[3]:
                         pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-250 + obj[1] * int(140*config["circleSize"]),config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]), int(60*config["circleSize"]) )
                     pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-250 + obj[1] * int(140*config["circleSize"]),config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]), int(60*config["circleSize"]) )
-                    rect1 = (config["resolution"][0]/2)-310-(6*int(config["circleSize"]%1*10)) + obj[1] * int(140*config["circleSize"])
+                    if int(config["circleSize"])==0: 
+                        circleOffset = abs(int(config["circleSize"]*10)-10)*6
+                    else:
+                        circleOffset = -int(config["circleSize"]%1*60)
+                    rect1 = (config["resolution"][0]/2)-310+circleOffset + obj[1] * int(140*config["circleSize"])
                     rect2 = config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]
                     rect3 = (120*config["circleSize"])
                     if not obj[3]:
@@ -486,17 +490,20 @@ def main():
             screen.blit(font.render(f"{padding(hitCount['good'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-270))
             screen.blit(font.render(f"{padding(hitCount['bad'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-245))
             screen.blit(font.render(f"{padding(hitCount['miss'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-220))
-            screen.blit(font.render('Score', True, WHITE), (config["resolution"][0]-230, config["resolution"][1]-35))
+            
             screen.blit(fontScore.render(padding(curScore, 7), True, WHITE), (config["resolution"][0]-230, config["resolution"][1]-85))
+            
             screen.blit(fontScore.render(str(combo)+"x", True, WHITE), (0,config["resolution"][1]-85))
+            
             screen.blit(font.render(maps[selectedMapIndex], True, WHITE), (0,0))
+            
             totalObjects = hitCount['miss']+hitCount['bad']+hitCount['good']+hitCount['perfect']
             if totalObjects!=0:
                 accuracy = int(100*((50*hitCount['bad'])+(100*hitCount['good'])+(300*(hitCount['perfect']+totalObjects)) )/( 300*(hitCount['bad']+hitCount['good']+hitCount['perfect']+hitCount["miss"]+totalObjects)))
             else:
                 accuracy = "100"
             screen.blit(fontScore.render(str(accuracy)+"%", True, WHITE), (0, 20))
-            screen.blit(font.render("Accuracy", True, WHITE), (0, 80))
+            
             mods = []
             length = 0
             for i in config["mods"]:
@@ -504,6 +511,11 @@ def main():
                     mods.append(i)
                     length = length+len(i)
             if mods!=[]: screen.blit(font.render("Mods: " + ' '.join(mods), True, WHITE), (config["resolution"][0]-(length*25), 0))
+            
+            for i in range(len(keysDown)):
+                if keysDown[i]==True:
+                    pygame.draw.rect(screen, WHITE, pygame.Rect(config["resolution"][0]-20,i*25,20,20))
+
         else:
             screen.blit(fontBold.render(title, True, WHITE), (0,0))
             screen.blit(fontBold.render("Maps:", True, WHITE), (0,20))
