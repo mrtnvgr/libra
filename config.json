@@ -17,6 +17,34 @@
         "mirror": "false"
     },
     "scores": "true",
+	"interface": {
+		"gameplay": {
+			"songName": {
+				"state": "true"
+			},
+			"accuracy": {
+				"state": "true"
+			},
+			"combo": {
+				"state": "true"
+			},
+			"judgement": {
+				"state": "true"
+			},
+			"judgementCounter": {
+				"state": "true"
+			},
+			"hitOverlay": {
+				"state": "true"
+			},
+			"score": {
+				"state": "true"
+			},
+			"mods": {
+				"state": "true"
+			}
+		}
+	},
     "backgrounds": {
         "userBackgrounds": {
             "mapSelection": "",
@@ -24,7 +52,7 @@
         },
         "mapBackground": "false"
     },
-    "hitwindow": [
+	"hitwindow": [
         135,
         90,
         22

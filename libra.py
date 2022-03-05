@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0305-1"
+version = "2022.0305-2"
 title = "Libra " + version
 
 def configReload():
@@ -463,7 +463,7 @@ def main():
                                     unloadedObjects.append(loadedMap.pop(0))
 
             
-            if hit != "":
+            if hit != "" and config["interface"]["gameplay"]["judgement"]["state"].lower()=="true":
                 hitWidth = 0.39*35*len(hit)
                 if hit=="miss":
                     hitColor = config["hitColors"][0]
@@ -482,39 +482,42 @@ def main():
         if maxCombo<combo: maxCombo = combo
 
         if isPlaying==True:
-            screen.blit(fontBold.render("Perfect: ", True, config["hitColors"][3]), (config["resolution"][0]-180, config["resolution"][1]-295))
-            screen.blit(fontBold.render("Good: ", True, config["hitColors"][2]), (config["resolution"][0]-157, config["resolution"][1]-270))
-            screen.blit(fontBold.render("Bad: ", True, config["hitColors"][1]), (config["resolution"][0]-140, config["resolution"][1]-245))
-            screen.blit(fontBold.render("Miss: ", True, config["hitColors"][0]), (config["resolution"][0]-149, config["resolution"][1]-220))
-            screen.blit(font.render(f"{padding(hitCount['perfect'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-295))
-            screen.blit(font.render(f"{padding(hitCount['good'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-270))
-            screen.blit(font.render(f"{padding(hitCount['bad'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-245))
-            screen.blit(font.render(f"{padding(hitCount['miss'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-220))
+            if config["interface"]["gameplay"]["judgementCounter"]["state"].lower()=="true":
+                screen.blit(fontBold.render("Perfect: ", True, config["hitColors"][3]), (config["resolution"][0]-180, config["resolution"][1]-295))
+                screen.blit(fontBold.render("Good: ", True, config["hitColors"][2]), (config["resolution"][0]-157, config["resolution"][1]-270))
+                screen.blit(fontBold.render("Bad: ", True, config["hitColors"][1]), (config["resolution"][0]-140, config["resolution"][1]-245))
+                screen.blit(fontBold.render("Miss: ", True, config["hitColors"][0]), (config["resolution"][0]-149, config["resolution"][1]-220))
+                screen.blit(font.render(f"{padding(hitCount['perfect'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-295))
+                screen.blit(font.render(f"{padding(hitCount['good'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-270))
+                screen.blit(font.render(f"{padding(hitCount['bad'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-245))
+                screen.blit(font.render(f"{padding(hitCount['miss'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-220))
             
-            screen.blit(fontScore.render(padding(curScore, 7), True, WHITE), (config["resolution"][0]-230, config["resolution"][1]-85))
+            if config["interface"]["gameplay"]["score"]["state"].lower()=="true": screen.blit(fontScore.render(padding(curScore, 7), True, WHITE), (config["resolution"][0]-230, 0))
             
-            screen.blit(fontScore.render(str(combo)+"x", True, WHITE), (0,config["resolution"][1]-85))
+            if config["interface"]["gameplay"]["combo"]["state"].lower()=="true": screen.blit(fontScore.render(str(combo)+"x", True, WHITE), (0,config["resolution"][1]-85))
             
-            screen.blit(font.render(maps[selectedMapIndex], True, WHITE), (0,0))
+            if config["interface"]["gameplay"]["songName"]["state"].lower()=="true": screen.blit(font.render(maps[selectedMapIndex], True, WHITE), (0,0))
             
             totalObjects = hitCount['miss']+hitCount['bad']+hitCount['good']+hitCount['perfect']
             if totalObjects!=0:
                 accuracy = int(100*((50*hitCount['bad'])+(100*hitCount['good'])+(300*(hitCount['perfect']+totalObjects)) )/( 300*(hitCount['bad']+hitCount['good']+hitCount['perfect']+hitCount["miss"]+totalObjects)))
             else:
                 accuracy = "100"
-            screen.blit(fontScore.render(str(accuracy)+"%", True, WHITE), (0, 20))
+            if config["interface"]["gameplay"]["accuracy"]["state"].lower()=="true": screen.blit(fontScore.render(str(accuracy)+"%", True, WHITE), (0, 20))
             
-            mods = []
-            length = 0
-            for i in config["mods"]:
-                if config["mods"][i].lower()=="true":
-                    mods.append(i)
-                    length = length+len(i)
-            if mods!=[]: screen.blit(font.render("Mods: " + ' '.join(mods), True, WHITE), (config["resolution"][0]-(length*25), 0))
-            
-            for i in range(len(keysDown)):
-                if keysDown[i]==True:
-                    pygame.draw.rect(screen, WHITE, pygame.Rect(config["resolution"][0]-20,i*25,20,20))
+            if config["interface"]["gameplay"]["mods"]["state"].lower()=="true":
+                mods = []
+                length = 0
+                for i in config["mods"]:
+                    if config["mods"][i].lower()=="true":
+                        mods.append(i)
+                        length = length+len(i)
+                if mods!=[]: screen.blit(font.render("Mods: " + ' '.join(mods), True, WHITE), (config["resolution"][0]-(length*25), 60))
+                
+            if config["interface"]["gameplay"]["hitOverlay"]["state"].lower()=="true":
+                for i in range(len(keysDown)):
+                    if keysDown[i]==True:
+                        pygame.draw.rect(screen, WHITE, pygame.Rect(config["resolution"][0]-20,config["resolution"][1]-25-i*25,20,20))
 
         else:
             screen.blit(fontBold.render(title, True, WHITE), (0,0))
