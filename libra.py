@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0305-2"
+version = "2022.0305-3"
 title = "Libra " + version
 
 def configReload():
@@ -28,7 +28,7 @@ def configReload():
     ],
     "circleSpeed": 1.9,
     "circleSize": 1.1,
-    "noteOffset": 0,
+    "audioOffset": 0,
     "fps": 360,
     "mods": {
         "suddenDeath": "false",
@@ -36,14 +36,49 @@ def configReload():
         "mirror": "false"
     },
     "scores": "true",
+	"interface": {
+		"gameplay": {
+			"songName": {
+				"state": "true"
+			},
+			"accuracy": {
+				"state": "true"
+			},
+			"combo": {
+				"state": "true"
+			},
+			"judgement": {
+				"state": "true"
+			},
+			"judgementCounter": {
+				"state": "true"
+			},
+			"hitOverlay": {
+				"state": "true"
+			},
+			"score": {
+				"state": "true"
+			},
+			"mods": {
+				"state": "true"
+			}
+		}
+	},
     "backgrounds": {
         "userBackgrounds": {
-            "mapSelection": "",
-            "gameplay": ""
+			"mapSelection": {
+				"file": ""
+			},
+			"gameplay": {
+				"file": ""
+			}
         },
-        "mapBackground": "false"
+		"mapBackground": {
+			"state": "true",
+			"brightness": 80
+		}
     },
-    "hitwindow": [
+	"hitwindow": [
         135,
         90,
         22
@@ -117,16 +152,21 @@ def parseMap(map, config):
     converted = []
     for mapline in mapdata:
         if type=="osu":
-            if config["backgrounds"]["mapBackground"].lower()=="true":
-                if "png" in mapline or "jpg" in mapline: background = mapline.split('"')[1]
+            if config["backgrounds"]["mapBackground"]["state"].lower()=="true":
+                if "png" in mapline or "jpg" in mapline or "jpeg" in mapline:
+                    backgroundfile = mapline.split('"')[1]
+                    if os.path.exists("maps/"+map+"/"+backgroundfile): background = backgroundfile
             if hitObjects==True:
                 splitted = mapline.split(",")
                 noteRow = int((int(splitted[0])*4)/512)
                 if config["mods"]["mirror"].lower()=="true": noteRow = abs(noteRow-3)
-                if int(splitted[5].split(":")[0])<2:
-                    converted.append([int(splitted[2]), noteRow])
-                else:
-                    converted.append([int(splitted[2]), noteRow, int(splitted[5].split(":")[0]), False, 0])
+                try:
+                    if int(splitted[5].split(":")[0])<2:
+                        converted.append([int(splitted[2]), noteRow])
+                    else:
+                        converted.append([int(splitted[2]), noteRow, int(splitted[5].split(":")[0]), False, 0])
+                except ValueError:
+                    return [[], []]
             else:
                 if mapline=="[HitObjects]":
                     hitObjects = True
@@ -161,7 +201,7 @@ def importMaps():
                                 audiofile = osuline.replace("AudioFilename:", "")
                                 if audiofile[0]==" ": audiofile = audiofile[1:]
                                 oszfile.extract(audiofile, "maps/"+diff[:-4]+"/")
-                            elif "jpg" in osuline or "png" in osuline:
+                            elif "jpg" in osuline or "png" in osuline or "jpeg" in osuline:
                                 oszfile.extract(osuline.split(",")[2].replace('"', ""), "maps/"+diff[:-4]+"/")
                 oszfile.close()
                 os.remove(os.path.join('maps/', dir))
@@ -172,7 +212,9 @@ def saveScore(name, curScore, hitCount, accuracy, maxCombo, config):
         if config["mods"][i].lower()=="true":
             mods.append(i)
     if mods==[]: mods = ""
+    time = datetime.datetime.today().strftime('%Y-%m-%d(%H:%M)')
     data = f"""{name}
+{time}
 Mods: {' '.join(mods)}
 Perfect: {hitCount['perfect']} 
 Good: {hitCount['good']}
@@ -185,7 +227,7 @@ Score: {padding(curScore, 7)}"""
         os.listdir('scores')
     except FileNotFoundError:
         os.mkdir("scores")
-    open("scores/"+name+f" ({datetime.datetime.today().strftime('%Y-%m-%d(%H:%M)')}).scr", "w").write(data)
+    open("scores/"+name+f" ({time}).scr", "w").write(data)
 
 def main():
     loadedMap = []
@@ -216,15 +258,18 @@ def main():
     maps = reloadMaps()
     config = configReload()
     background = ""
-    if config["backgrounds"]["userBackgrounds"]["mapSelection"]!="": mapSelectionBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["mapSelection"])
-    if config["backgrounds"]["userBackgrounds"]["gameplay"]!="": gameplayBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["gameplay"])
+    if config["backgrounds"]["userBackgrounds"]["mapSelection"]["file"]!="":
+        mapSelectionBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["mapSelection"]['file']).convert()
+    if config["backgrounds"]["userBackgrounds"]["gameplay"]["file"]!="":
+        gameplayBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["gameplay"]["file"]).convert()
     while True:
         screen.fill(BLACK)
-        if config["backgrounds"]["userBackgrounds"]["mapSelection"]!="" and isPlaying==False:
+        if config["backgrounds"]["userBackgrounds"]["mapSelection"]["file"]!="" and isPlaying==False:
             screen.blit(mapSelectionBg, mapSelectionBg.get_rect())
-        elif config["backgrounds"]["userBackgrounds"]["gameplay"]!="" and isPlaying:
+        elif config["backgrounds"]["userBackgrounds"]["gameplay"]["file"]!="" and isPlaying:
             screen.blit(gameplayBg, gameplayBg.get_rect())
-        if config["backgrounds"]["mapBackground"]=="true" and background!="" and isPlaying: screen.blit(backgroundBg, backgroundBg.get_rect())
+        if config["backgrounds"]["mapBackground"]["state"]=="true" and background!="" and isPlaying:
+            screen.blit(backgroundBg, backgroundBg.get_rect())
         for i in range(len(keysPressed)):
             keysPressed[i] = False
             keysReleased[i] = False
@@ -310,9 +355,12 @@ def main():
                     pygame.mixer.music.pause()
  
                     loadedFile = parseMap(maps[selectedMapIndex], config)
+                    if loadedFile[0]==[]: continue
                     loadedMap = loadedFile[0]
                     background = loadedFile[1]
-                    if background!="": backgroundBg = pygame.transform.scale(pygame.image.load("maps/"+maps[selectedMapIndex]+"/"+background), tuple(config["resolution"]))
+                    if background!="":
+                        backgroundBg = pygame.transform.scale(pygame.image.load("maps/"+maps[selectedMapIndex]+"/"+background).convert(), tuple(config["resolution"]))
+                        backgroundBg.set_alpha(config["backgrounds"]["mapBackground"]["brightness"])
                     for i in range(20):
                         loadedObjects.append(loadedMap.pop(0))
                     isPlaying = True
@@ -476,7 +524,7 @@ def main():
                 screen.blit(fontBold.render(hit, True, hitColor), ((config["resolution"][0]/2)-50 - hitWidth / 2, config["resolution"][1]-280))
             loadedObjects = unloadedObjects
         
-        if isPlaying and playingFrame + 2000 + config["noteOffset"] < pygame.time.get_ticks():
+        if isPlaying and playingFrame + 2000 + config["audioOffset"] < pygame.time.get_ticks():
             pygame.mixer.music.unpause()
 
         if maxCombo<combo: maxCombo = combo

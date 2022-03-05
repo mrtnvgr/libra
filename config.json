@@ -9,7 +9,7 @@
     ],
     "circleSpeed": 1.9,
     "circleSize": 1.1,
-    "noteOffset": 0,
+    "audioOffset": 0,
     "fps": 360,
     "mods": {
         "suddenDeath": "false",
@@ -47,10 +47,17 @@
 	},
     "backgrounds": {
         "userBackgrounds": {
-            "mapSelection": "",
-            "gameplay": ""
+			"mapSelection": {
+				"file": ""
+			},
+			"gameplay": {
+				"file": ""
+			}
         },
-        "mapBackground": "false"
+		"mapBackground": {
+			"state": "true",
+			"brightness": 80
+		}
     },
 	"hitwindow": [
         135,
@@ -69,5 +76,5 @@
         [3,116,170],
         [171,171,171]
     ],
-    "autoUpdate": "true"
+    "autoUpdate": "false"
 }
