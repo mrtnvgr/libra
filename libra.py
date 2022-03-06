@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0305-3"
+version = "2022.0306"
 title = "Libra " + version
 
 def configReload():
@@ -112,6 +112,7 @@ flags = 0
 if config["fullscreen"].lower()=="true":
     flags = flags | pygame.FULLSCREEN
 screen = pygame.display.set_mode(tuple(config["resolution"]), flags)
+pygame.mouse.set_visible(False)
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
