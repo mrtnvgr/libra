@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0306"
+version = "2022.0307"
 title = "Libra " + version
 
 def configReload():
@@ -183,6 +183,7 @@ def reloadMaps():
 
 def importMaps():
     files = os.listdir('maps/')
+    newMaps = []
     for dir in files:
             if ".osz" in dir:
                 screen.blit(fontBold.render(title, True, WHITE), (0,0))
@@ -192,6 +193,7 @@ def importMaps():
                 for diff in oszfile.namelist():
                     if ".osu" in diff:
                         oszfile.extract(diff, "maps/"+diff[:-4])
+                        newMaps.append(diff[:-4])
                         try:
                             os.rename("maps/"+diff[:-4]+"/"+diff, "maps/"+diff[:-4]+"/map.osu")
                         except FileExistsError:
@@ -206,6 +208,7 @@ def importMaps():
                                 oszfile.extract(osuline.split(",")[2].replace('"', ""), "maps/"+diff[:-4]+"/")
                 oszfile.close()
                 os.remove(os.path.join('maps/', dir))
+    return newMaps
 
 def saveScore(name, curScore, hitCount, accuracy, maxCombo, config):
     mods = []
@@ -255,8 +258,13 @@ def main():
         os.listdir('maps/')
     except FileNotFoundError:
         os.mkdir('maps')
-    importMaps()
+    newMaps = importMaps()
     maps = reloadMaps()
+    if newMaps!=[]:
+        for newMap in newMaps:
+            if newMap in maps:
+                maps.remove(newMap)
+                maps = [newMap] + maps # новые песни в начало списка
     config = configReload()
     background = ""
     if config["backgrounds"]["userBackgrounds"]["mapSelection"]["file"]!="":
@@ -305,8 +313,7 @@ def main():
             pygame.mixer.music.stop()
 
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return
+            if event.type == pygame.QUIT: return
             if event.type == pygame.KEYDOWN:
                 if event.key==pygame.K_ESCAPE:
                     if isPlaying:
@@ -328,7 +335,7 @@ def main():
                         pygame.mixer.music.stop()
                     else:
                         pygame.quit()
-                        sys.exit(0)
+                        return
                 if (event.key == pygame.K_DOWN or event.key==pygame.K_s) and not isPlaying:
                     selectedMapIndex += 1
                     selectingMaps = "down"
@@ -384,10 +391,10 @@ def main():
         for i in range(len(keysDown)):
             if isPlaying:
                 if keysDown[i]:
-                    pygame.draw.circle(screen, config["colors"][i], ((config["resolution"][0]/2)-250 + i * int(140*config["circleSize"]), config["resolution"][1]-100), int(60*config["circleSize"]), 5)
-                    pygame.draw.circle(screen, config["colors"][i], ((config["resolution"][0]/2)-250 + i * int(140*config["circleSize"]), config["resolution"][1]-100), int(60*config["circleSize"]))
+                    pygame.draw.circle(screen, config["colors"][i], ((config["resolution"][0]/2)-220 + i * int(140*config["circleSize"]), config["resolution"][1]-100), int(60*config["circleSize"]), 5)
+                    pygame.draw.circle(screen, config["colors"][i], ((config["resolution"][0]/2)-220 + i * int(140*config["circleSize"]), config["resolution"][1]-100), int(60*config["circleSize"]))
                 else:
-                    pygame.draw.circle(screen, WHITE, ((config["resolution"][0]/2)-250 + i * int(140*config["circleSize"]), config["resolution"][1]-100), int(60*config["circleSize"]), 5)
+                    pygame.draw.circle(screen, WHITE, ((config["resolution"][0]/2)-220 + i * int(140*config["circleSize"]), config["resolution"][1]-100), int(60*config["circleSize"]), 5)
         if isPlaying and playingFrame + 1000 < pygame.time.get_ticks():
             if len(loadedObjects) == 0:
                 isPlaying = False
@@ -419,13 +426,13 @@ def main():
                                 break
                 if len(obj) == 5:
                     if not obj[3]:
-                        pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-250 + obj[1] * int(140*config["circleSize"]),config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]), int(60*config["circleSize"]) )
-                    pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-250 + obj[1] * int(140*config["circleSize"]),config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]), int(60*config["circleSize"]) )
+                        pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-220 + obj[1] * int(140*config["circleSize"]),config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]), int(60*config["circleSize"]) )
+                    pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-220 + obj[1] * int(140*config["circleSize"]),config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]), int(60*config["circleSize"]) )
                     if int(config["circleSize"])==0: 
                         circleOffset = abs(int(config["circleSize"]*10)-10)*6
                     else:
                         circleOffset = -int(config["circleSize"]%1*60)
-                    rect1 = (config["resolution"][0]/2)-310+circleOffset + obj[1] * int(140*config["circleSize"])
+                    rect1 = (config["resolution"][0]/2)-280+circleOffset + obj[1] * int(140*config["circleSize"])
                     rect2 = config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]
                     rect3 = (120*config["circleSize"])
                     if not obj[3]:
@@ -441,7 +448,7 @@ def main():
                         if len(loadedMap) != 0:
                             unloadedObjects.append(loadedMap.pop(0))
                 else:
-                    pygame.draw.circle(screen, tuple(config["colors"][obj[1]]), ((config["resolution"][0]/2)-250 + obj[1] * int(140*config["circleSize"]), config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]), int(60*config["circleSize"]) )
+                    pygame.draw.circle(screen, tuple(config["colors"][obj[1]]), ((config["resolution"][0]/2)-220 + obj[1] * int(140*config["circleSize"]), config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"]), int(60*config["circleSize"]) )
 
                     # if the circle passes the visible point
                     if config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["circleSpeed"] > config["resolution"][0]-300:
@@ -522,7 +529,7 @@ def main():
                     hitColor = config["hitColors"][2]
                 elif hit=="perfect":
                     hitColor = config["hitColors"][3]
-                screen.blit(fontBold.render(hit, True, hitColor), ((config["resolution"][0]/2)-50 - hitWidth / 2, config["resolution"][1]-280))
+                screen.blit(fontBold.render(hit, True, hitColor), ((config["resolution"][0]/2) - hitWidth / 2, config["resolution"][1]-280))
             loadedObjects = unloadedObjects
         
         if isPlaying and playingFrame + 2000 + config["audioOffset"] < pygame.time.get_ticks():
@@ -566,7 +573,12 @@ def main():
             if config["interface"]["gameplay"]["hitOverlay"]["state"].lower()=="true":
                 for i in range(len(keysDown)):
                     if keysDown[i]==True:
-                        pygame.draw.rect(screen, WHITE, pygame.Rect(config["resolution"][0]-20,config["resolution"][1]-25-i*25,20,20))
+                        overlayColor = config["colors"][i]
+                        overlayBorder = 25
+                    else:
+                        overlayColor = WHITE
+                        overlayBorder = 2
+                    pygame.draw.rect(screen, overlayColor, (config["resolution"][0]-20,config["resolution"][1]-25-i*25,20,20), overlayBorder)
 
         else:
             screen.blit(fontBold.render(title, True, WHITE), (0,0))
