@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0307"
+version = "2022.0307-1"
 title = "Libra " + version
 
 def configReload():
@@ -226,7 +226,7 @@ Bad: {hitCount['bad']}
 Miss: {hitCount['miss']}
 Accuracy: {accuracy}
 Combo: {maxCombo}
-Score: {padding(curScore, 7)}"""
+Score: {padding(curScore, 8)}"""
     try:
         os.listdir('scores')
     except FileNotFoundError:
@@ -548,7 +548,7 @@ def main():
                 screen.blit(font.render(f"{padding(hitCount['bad'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-245))
                 screen.blit(font.render(f"{padding(hitCount['miss'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-220))
             
-            if config["interface"]["gameplay"]["score"]["state"].lower()=="true": screen.blit(fontScore.render(padding(curScore, 7), True, WHITE), (config["resolution"][0]-230, 0))
+            if config["interface"]["gameplay"]["score"]["state"].lower()=="true": screen.blit(fontScore.render(padding(curScore, 8), True, WHITE), (config["resolution"][0]-265, 0))
             
             if config["interface"]["gameplay"]["combo"]["state"].lower()=="true": screen.blit(fontScore.render(str(combo)+"x", True, WHITE), (0,config["resolution"][1]-85))
             
