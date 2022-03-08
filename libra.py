@@ -2,12 +2,12 @@
 from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame, math, os, sys, requests, shutil, datetime, json, zipfile
-from natsort import natsorted
+from natsort import natsorted, IGNORECASE
 from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0308"
+version = "2022.0308-1"
 title = "Libra " + version
 
 def configReload():
@@ -179,7 +179,7 @@ def reloadMaps():
     for dir in files:
         if os.path.isdir(os.path.join('maps/', dir)):
             maps.append(dir)
-    return natsorted(maps)
+    return natsorted(maps, alg=IGNORECASE)
 
 def importMaps():
     files = os.listdir('maps/')
@@ -203,9 +203,15 @@ def importMaps():
                             if "AudioFilename" in osuline:
                                 audiofile = osuline.replace("AudioFilename:", "")
                                 if audiofile[0]==" ": audiofile = audiofile[1:]
-                                oszfile.extract(audiofile, "maps/"+diff[:-4]+"/")
+                                try:
+                                    oszfile.extract(audiofile, "maps/"+diff[:-4]+"/")
+                                except KeyError:
+                                    pass
                             elif "jpg" in osuline or "png" in osuline or "jpeg" in osuline:
-                                oszfile.extract(osuline.split(",")[2].replace('"', ""), "maps/"+diff[:-4]+"/")
+                                try:
+                                    oszfile.extract(osuline.split(",")[2].replace('"', ""), "maps/"+diff[:-4]+"/")
+                                except KeyError:
+                                    pass
                 oszfile.close()
                 os.remove(os.path.join('maps/', dir))
     return newMaps
@@ -368,7 +374,10 @@ def main():
                             if "AudioFilename" in line:
                                 songfile = line.replace("AudioFilename:", "")
                                 if songfile[0]==" ": songfile = songfile[1:]
-                    pygame.mixer.music.load("maps/"+maps[selectedMapIndex]+"/"+songfile)
+                    try:
+                        pygame.mixer.music.load("maps/"+maps[selectedMapIndex]+"/"+songfile)
+                    except pygame.error:
+                        continue
                     pygame.mixer.music.play()
                     pygame.mixer.music.pause()
  
