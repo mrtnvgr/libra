@@ -10,7 +10,7 @@
     "circleSpeed": 1.9,
     "circleSize": 1.1,
     "audioOffset": 0,
-    "fps": 360,
+    "fps": 500,
     "mods": {
         "suddenDeath": "false",
         "hardrock": "false",
@@ -76,5 +76,5 @@
         [3,116,170],
         [171,171,171]
     ],
-    "autoUpdate": "false"
+    "autoUpdate": "true"
 }

@@ -7,11 +7,11 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0307-1"
+version = "2022.0308"
 title = "Libra " + version
 
 def configReload():
-    while True:
+    while(1):
         try:
             config = json.load(open("config.json"))
             break
@@ -29,7 +29,7 @@ def configReload():
     "circleSpeed": 1.9,
     "circleSize": 1.1,
     "audioOffset": 0,
-    "fps": 360,
+    "fps": 500,
     "mods": {
         "suddenDeath": "false",
         "hardrock": "false",
@@ -109,10 +109,10 @@ pygame.font.init()
 pygame.mixer.init()
 
 flags = 0
-if config["fullscreen"].lower()=="true":
-    flags = flags | pygame.FULLSCREEN
+if config["fullscreen"].lower()=="true": flags = pygame.FULLSCREEN
 screen = pygame.display.set_mode(tuple(config["resolution"]), flags)
 pygame.mouse.set_visible(False)
+pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.KEYUP])
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -136,7 +136,7 @@ if config["autoUpdate"].lower()=="true":
             os_prefix = ".exe"
         else:
             os_prefix = ""
-        open("libra("+remote_version+")"+os_prefix, "wb").write(requests.get(GIT_RELEASE_URL+os_prefix, stream=True).content)
+        open("libra-"+remote_version+os_prefix, "wb").write(requests.get(GIT_RELEASE_URL+os_prefix, stream=True).content)
         sys.exit(0)
 
 def padding(score, max):
@@ -271,7 +271,7 @@ def main():
         mapSelectionBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["mapSelection"]['file']).convert()
     if config["backgrounds"]["userBackgrounds"]["gameplay"]["file"]!="":
         gameplayBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["gameplay"]["file"]).convert()
-    while True:
+    while(1):
         screen.fill(BLACK)
         if config["backgrounds"]["userBackgrounds"]["mapSelection"]["file"]!="" and isPlaying==False:
             screen.blit(mapSelectionBg, mapSelectionBg.get_rect())
@@ -345,9 +345,19 @@ def main():
                 elif event.key==pygame.K_DELETE and not isPlaying:
                     shutil.rmtree("maps/"+maps[selectedMapIndex], ignore_errors=True)
                     maps = reloadMaps()
+                    if newMaps!=[]:
+                        for newMap in newMaps:
+                            if newMap in maps:
+                                maps.remove(newMap)
+                                maps = [newMap] + maps # новые песни в начало списка
                 elif event.key==pygame.K_r:
-                    importMaps()
+                    newMaps = importMaps()
                     maps = reloadMaps()
+                    if newMaps!=[]:
+                        for newMap in newMaps:
+                            if newMap in maps:
+                                maps.remove(newMap)
+                                maps = [newMap] + maps # новые песни в начало списка
                     config = configReload()
                 elif event.key==pygame.K_F2:
                     selectedMapIndex = randint(0, len(maps))
@@ -463,7 +473,10 @@ def main():
                     if len(loadedLaneObjects[i]) != 0:
                         obj = loadedLaneObjects[i][0]
                         if len(obj) == 5:
-                            unObj = unloadedObjects[unloadedObjects.index(loadedLaneObjects[i][0])]
+                            try:
+                                unObj = unloadedObjects[unloadedObjects.index(loadedLaneObjects[i][0])]
+                            except ValueError: # ultra rare error
+                                pass
                             unObj[3] = True
                             unObj[4] = abs(obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame))
                         else:
@@ -586,7 +599,6 @@ def main():
             pygame.draw.rect(screen, WHITE, pygame.Rect(0, 63, 15, 29))
             for i in range(len(maps[selectedMapIndex:])):
                 screen.blit(font.render(maps[selectedMapIndex:][i], False, WHITE), (30, 65 + i * 25))
-
 
         pygame.display.flip()
         pygame.time.Clock().tick(config["fps"])
