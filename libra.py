@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0309"
+version = "2022.0309-1"
 title = "Libra " + version
 
 def configReload():
@@ -237,6 +237,7 @@ def main():
         'miss': 0
     }
     hit = ""
+    searchtext = ""
     try:
         os.listdir('maps/')
     except FileNotFoundError:
@@ -248,6 +249,7 @@ def main():
             if newMap in maps:
                 maps.remove(newMap)
                 maps = [newMap] + maps # новые песни в начало списка
+    oldmaps = maps
     config = configReload()
     background = ""
     if config["backgrounds"]["userBackgrounds"]["mapSelection"]["file"]!="":
@@ -319,10 +321,10 @@ def main():
                     else:
                         pygame.quit()
                         return
-                if (event.key == pygame.K_DOWN or event.key==pygame.K_s) and not isPlaying:
+                if event.key == pygame.K_DOWN and not isPlaying:
                     selectedMapIndex += 1
                     selectingMaps = "down"
-                elif (event.key == pygame.K_UP or event.key==pygame.K_w) and not isPlaying:
+                elif event.key == pygame.K_UP and not isPlaying:
                     selectedMapIndex -= 1
                     selectingMaps = "up"
                 elif event.key==pygame.K_DELETE and not isPlaying:
@@ -333,7 +335,8 @@ def main():
                             if newMap in maps:
                                 maps.remove(newMap)
                                 maps = [newMap] + maps # новые песни в начало списка
-                elif event.key==pygame.K_r:
+                    oldmaps = maps
+                elif event.key==pygame.K_F3:
                     newMaps = importMaps()
                     maps = reloadMaps()
                     if newMaps!=[]:
@@ -341,6 +344,7 @@ def main():
                             if newMap in maps:
                                 maps.remove(newMap)
                                 maps = [newMap] + maps # новые песни в начало списка
+                    oldmaps = maps
                     config = configReload()
                 elif event.key==pygame.K_F2:
                     selectedMapIndex = randint(0, len(maps))
@@ -365,25 +369,37 @@ def main():
                     if background!="":
                         backgroundBg = pygame.transform.scale(pygame.image.load("maps/"+maps[selectedMapIndex]+"/"+background).convert(), tuple(config["resolution"]))
                         backgroundBg.set_alpha(config["backgrounds"]["mapBackground"]["brightness"])
-                    for i in range(20):
+                    for i in range(100):
                         loadedObjects.append(loadedMap.pop(0))
                     isPlaying = True
                     playingFrame = pygame.time.get_ticks()
                 else:
-                    for i in range(len(config["keybinds"])):
-                        if event.key == eval(f"pygame.K_{config['keybinds'][i]}") and isPlaying:
-                            keysDown[i] = True
-                            keysPressed[i] = True
-                
+                    if isPlaying:
+                        for i in range(len(config["keybinds"])):
+                            if event.key == eval(f"pygame.K_{config['keybinds'][i]}"):
+                                keysDown[i] = True
+                                keysPressed[i] = True
+                    else:
+                        if event.key==pygame.K_BACKSPACE:
+                            searchtext = searchtext[:-1]
+                            maps = oldmaps
+                        if len(pygame.key.name(event.key))<2:
+                            searchtext = searchtext + pygame.key.name(event.key)
+                        searchmaps = []
+                        for i in maps:
+                            if searchtext.lower() in i: searchmaps.append(i)
+                        maps = searchmaps
+
             elif event.type == pygame.KEYUP:
-                if (event.key==pygame.K_DOWN or event.key==pygame.K_UP or event.key==pygame.K_w or event.key==pygame.K_s) and not isPlaying:
+                if (event.key==pygame.K_DOWN or event.key==pygame.K_UP) and not isPlaying:
                     selectingMapsCooldown = 0
                     selectingMaps = ""
-                for i in range(len(config["keybinds"])):
-                    if event.key == eval(f'pygame.K_{config["keybinds"][i]}') and isPlaying:
-                        keysDown[i] = False
-                        keysReleased[i] = True
-        
+                if isPlaying:
+                    for i in range(len(config["keybinds"])):
+                        if event.key == eval(f'pygame.K_{config["keybinds"][i]}'):
+                            keysDown[i] = False
+                            keysReleased[i] = True
+                            
         for i in range(len(keysDown)):
             if isPlaying:
                 if keysDown[i]:
@@ -615,8 +631,10 @@ Score: {padding(curScore, 8)}"""
             screen.blit(fontBold.render(title, True, WHITE), (0,0))
             screen.blit(fontBold.render("Maps:", True, WHITE), (0,20))
             pygame.draw.rect(screen, WHITE, pygame.Rect(0, 63, 15, 29))
+            if searchtext!="":
+                screen.blit(fontBold.render("Search: "+searchtext, True, WHITE), (0,40))
             for i in range(len(maps[selectedMapIndex:])):
-                screen.blit(font.render(maps[selectedMapIndex:][i], False, WHITE), (30, 65 + i * 25))
+                screen.blit(font.render(maps[selectedMapIndex:][i], True, WHITE), (30, 65 + i * 25))
 
         pygame.display.flip()
         pygame.time.Clock().tick(config["fps"])
