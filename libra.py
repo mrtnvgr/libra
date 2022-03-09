@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0308-1"
+version = "2022.0309"
 title = "Libra " + version
 
 def configReload():
@@ -35,7 +35,7 @@ def configReload():
         "hardrock": "false",
         "mirror": "false"
     },
-    "scores": "true",
+    "saveScores": "true",
 	"interface": {
 		"gameplay": {
 			"songName": {
@@ -216,29 +216,6 @@ def importMaps():
                 os.remove(os.path.join('maps/', dir))
     return newMaps
 
-def saveScore(name, curScore, hitCount, accuracy, maxCombo, config):
-    mods = []
-    for i in config["mods"]:
-        if config["mods"][i].lower()=="true":
-            mods.append(i)
-    if mods==[]: mods = ""
-    time = datetime.datetime.today().strftime('%Y-%m-%d(%H:%M)')
-    data = f"""{name}
-{time}
-Mods: {' '.join(mods)}
-Perfect: {hitCount['perfect']} 
-Good: {hitCount['good']}
-Bad: {hitCount['bad']}
-Miss: {hitCount['miss']}
-Accuracy: {accuracy}
-Combo: {maxCombo}
-Score: {padding(curScore, 8)}"""
-    try:
-        os.listdir('scores')
-    except FileNotFoundError:
-        os.mkdir("scores")
-    open("scores/"+name+f" ({time}).scr", "w").write(data)
-
 def main():
     loadedMap = []
     loadedObjects = []
@@ -417,8 +394,40 @@ def main():
         if isPlaying and playingFrame + 1000 < pygame.time.get_ticks():
             if len(loadedObjects) == 0:
                 isPlaying = False
-                if config["scores"].lower()=="true":
-                    saveScore(maps[selectedMapIndex], curScore, hitCount, accuracy, maxCombo, config)
+                mods = []
+                for i in config["mods"]:
+                    if config["mods"][i].lower()=="true":
+                        mods.append(i)
+                if mods==[]: mods = ""
+                time = datetime.datetime.today().strftime('%Y-%m-%d(%H:%M)')
+                data = f"""{maps[selectedMapIndex]}
+{time}
+Mods: {' '.join(mods)}
+Perfect: {hitCount['perfect']} 
+Good: {hitCount['good']}
+Bad: {hitCount['bad']}
+Miss: {hitCount['miss']}
+Accuracy: {accuracy}
+Combo: {maxCombo}
+Score: {padding(curScore, 8)}"""
+                if config["saveScores"].lower()=="true":
+                    try:
+                        os.listdir('scores')
+                    except FileNotFoundError:
+                        os.mkdir("scores")
+                    open("scores/"+maps[selectedMapIndex]+f" ({time}).scr", "w").write(data)
+                screen.fill(BLACK)
+                screen.blit(fontBold.render(title, True, WHITE), (0,0))
+                for i, l in enumerate(data.splitlines()):
+                    screen.blit(font.render(l, True, WHITE), (0, 20 + 20*i))
+                pygame.display.flip()
+                while True:
+                    event = pygame.event.wait()
+                    if event.type==pygame.QUIT or event.key==pygame.K_ESCAPE:
+                        pygame.quit()
+                        return
+                    elif event.type==pygame.KEYDOWN and event.key==pygame.K_RETURN: break
+
                 loadedObjects = []
                 keysDown = [False, False, False, False]
                 keysPressed = [False, False, False, False]

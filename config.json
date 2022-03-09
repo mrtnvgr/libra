@@ -16,7 +16,7 @@
         "hardrock": "false",
         "mirror": "false"
     },
-    "scores": "true",
+    "saveScores": "true",
 	"interface": {
 		"gameplay": {
 			"songName": {
