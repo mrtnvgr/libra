@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0309-1"
+version = "2022.0310"
 title = "Libra " + version
 
 def configReload():
@@ -385,9 +385,11 @@ def main():
                             maps = oldmaps
                         if len(pygame.key.name(event.key))<2:
                             searchtext = searchtext + pygame.key.name(event.key)
+                        elif event.key==pygame.K_SPACE:
+                            searchtext = searchtext + " "
                         searchmaps = []
                         for i in maps:
-                            if searchtext.lower() in i: searchmaps.append(i)
+                            if searchtext in i.lower(): searchmaps.append(i)
                         maps = searchmaps
 
             elif event.type == pygame.KEYUP:
