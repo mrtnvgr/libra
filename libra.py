@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0312-1"
+version = "2022.0312-2"
 title = "Libra " + version
 
 def configReload():
@@ -353,7 +353,7 @@ def main():
                                 maps = [newMap] + maps # новые песни в начало списка
                     oldmaps = maps
                     config = configReload()
-                elif event.key==pygame.K_F2:
+                elif event.key==pygame.K_F2 and not isPlaying:
                     selectedMapIndex = randint(0, len(maps))
                 elif event.key == pygame.K_RETURN and not isPlaying:
                     if maps==[]: continue 
@@ -387,17 +387,19 @@ def main():
                                 keysDown[i] = True
                                 keysPressed[i] = True
                     else:
-                        if event.key==pygame.K_BACKSPACE:
-                            searchtext = searchtext[:-1]
-                            maps = oldmaps
-                        if len(pygame.key.name(event.key))<2:
-                            searchtext = searchtext + pygame.key.name(event.key)
-                        elif event.key==pygame.K_SPACE:
-                            searchtext = searchtext + " "
-                        searchmaps = []
-                        for i in maps:
-                            if searchtext.lower() in i.lower(): searchmaps.append(i)
-                        maps = searchmaps
+                        if event.type==pygame.KEYDOWN:
+                            if event.key==pygame.K_BACKSPACE:
+                                searchtext = searchtext[:-1]
+                                maps = oldmaps
+                            if len(pygame.key.name(event.key))<2:
+                                searchtext = searchtext + pygame.key.name(event.key)
+                            elif event.key==pygame.K_SPACE:
+                                searchtext = searchtext + " "
+                            searchmaps = []
+                            for i in maps:
+                                if searchtext.lower() in i.lower(): searchmaps.append(i)
+                            maps = searchmaps
+                            selectedMapIndex = 0
 
             elif event.type == pygame.KEYUP:
                 if (event.key==pygame.K_DOWN or event.key==pygame.K_UP) and not isPlaying:
@@ -642,8 +644,9 @@ Score: {padding(curScore, 8)}"""
             pygame.draw.rect(screen, WHITE, pygame.Rect(0, 63, 15, 29))
             if searchtext!="":
                 screen.blit(fontBold.render("Search: "+searchtext, True, WHITE), (0,40))
-            for i in range(len(maps[selectedMapIndex:selectedMapIndex+(config["resolution"][1]-95)//25])):
-                screen.blit(font.render(maps[selectedMapIndex:][i], True, WHITE), (30, 65 + i * 25))
+            rendermaps = maps[selectedMapIndex:selectedMapIndex+(config["resolution"][1]-95)//25]
+            for i in range(len(rendermaps)):
+                screen.blit(font.render(rendermaps[i], True, WHITE), (30, 65 + i * 25))
 
         pygame.display.flip()
 
