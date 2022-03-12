@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0310"
+version = "2022.0312"
 title = "Libra " + version
 
 def configReload():
@@ -107,6 +107,7 @@ config = configReload()
 pygame.display.set_caption(title)
 pygame.font.init()
 pygame.mixer.init()
+clock = pygame.time.Clock()
 
 flags = 0
 if config["fullscreen"].lower()=="true": flags = pygame.FULLSCREEN
@@ -154,8 +155,8 @@ def parseMap(map, config):
     for mapline in mapdata:
         if type=="osu":
             if config["backgrounds"]["mapBackground"]["state"].lower()=="true":
-                if "png" in mapline or "jpg" in mapline or "jpeg" in mapline:
-                    backgroundfile = mapline.split('"')[1]
+                if ("png" in mapline or "jpg" in mapline or "jpeg" in mapline) and mapline[0]=="0":
+                    backgroundfile = mapline.split(",")[2].replace('"', "")
                     if os.path.exists("maps/"+map+"/"+backgroundfile): background = backgroundfile
             if hitObjects==True:
                 splitted = mapline.split(",")
@@ -171,6 +172,7 @@ def parseMap(map, config):
             else:
                 if mapline=="[HitObjects]":
                     hitObjects = True
+    print(converted)
     return [converted, background]
 
 def reloadMaps():
@@ -186,6 +188,7 @@ def importMaps():
     newMaps = []
     for dir in files:
             if ".osz" in dir:
+                screen.fill(BLACK)
                 screen.blit(fontBold.render(title, True, WHITE), (0,0))
                 screen.blit(fontBold.render("Unzipping...", True, WHITE), (0,20))
                 pygame.display.flip()
@@ -210,7 +213,7 @@ def importMaps():
                             elif "jpg" in osuline or "png" in osuline or "jpeg" in osuline:
                                 try:
                                     oszfile.extract(osuline.split(",")[2].replace('"', ""), "maps/"+diff[:-4]+"/")
-                                except KeyError:
+                                except KeyError or IndexError:
                                     pass
                 oszfile.close()
                 os.remove(os.path.join('maps/', dir))
@@ -257,6 +260,7 @@ def main():
     if config["backgrounds"]["userBackgrounds"]["gameplay"]["file"]!="":
         gameplayBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["gameplay"]["file"]).convert()
     while(1):
+        clock.tick(config["fps"])
         screen.fill(BLACK)
         if config["backgrounds"]["userBackgrounds"]["mapSelection"]["file"]!="" and isPlaying==False:
             screen.blit(mapSelectionBg, mapSelectionBg.get_rect())
@@ -389,7 +393,7 @@ def main():
                             searchtext = searchtext + " "
                         searchmaps = []
                         for i in maps:
-                            if searchtext in i.lower(): searchmaps.append(i)
+                            if searchtext.lower() in i.lower(): searchmaps.append(i)
                         maps = searchmaps
 
             elif event.type == pygame.KEYUP:
@@ -437,15 +441,14 @@ Score: {padding(curScore, 8)}"""
                 screen.fill(BLACK)
                 screen.blit(fontBold.render(title, True, WHITE), (0,0))
                 for i, l in enumerate(data.splitlines()):
-                    screen.blit(font.render(l, True, WHITE), (0, 20 + 20*i))
+                    screen.blit(font.render(l, True, WHITE), (0, 25 + 25*i))
                 pygame.display.flip()
                 while True:
                     event = pygame.event.wait()
-                    if event.type==pygame.QUIT or event.key==pygame.K_ESCAPE:
+                    if event.type==pygame.QUIT or (event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE):
                         pygame.quit()
                         return
                     elif event.type==pygame.KEYDOWN and event.key==pygame.K_RETURN: break
-
                 loadedObjects = []
                 keysDown = [False, False, False, False]
                 keysPressed = [False, False, False, False]
@@ -461,6 +464,7 @@ Score: {padding(curScore, 8)}"""
                 }
                 hit = ""
                 pygame.mixer.music.stop()
+                continue
             unloadedObjects = loadedObjects
             loadedLaneObjects = [[], [], [], []]
             for obj in loadedObjects:
@@ -635,11 +639,10 @@ Score: {padding(curScore, 8)}"""
             pygame.draw.rect(screen, WHITE, pygame.Rect(0, 63, 15, 29))
             if searchtext!="":
                 screen.blit(fontBold.render("Search: "+searchtext, True, WHITE), (0,40))
-            for i in range(len(maps[selectedMapIndex:])):
+            for i in range(len(maps[selectedMapIndex:selectedMapIndex+(config["resolution"][1]-95)//25])):
                 screen.blit(font.render(maps[selectedMapIndex:][i], True, WHITE), (30, 65 + i * 25))
 
         pygame.display.flip()
-        pygame.time.Clock().tick(config["fps"])
 
 if __name__ == "__main__":
     main()
