@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0312-2"
+version = "2022.0312-3"
 title = "Libra " + version
 
 def configReload():
@@ -19,13 +19,14 @@ def configReload():
             print("Config does not exist. Writing default")
             data = """{
     "resolution": [1920,1080],
-    "fullscreen": "false",
-	"keybinds": [
-        "q",
-        "w",
-        "LEFTBRACKET",
-        "RIGHTBRACKET"
-    ],
+    "fullscreen": "true",
+	"keybinds": {
+        "circles": ["q","w","LEFTBRACKET", "RIGHTBRACKET"],
+        "back": "ESCAPE",
+        "randomMap": "F2",
+        "reload": "F3",
+        "toggleBackgrounds": "F4"
+    },
     "circleSpeed": 1.9,
     "circleSize": 1.1,
     "audioOffset": 0,
@@ -221,6 +222,7 @@ def main():
     loadedMap = []
     loadedObjects = []
     selectedMapIndex = 0
+    oldIndex = 0
     selectingMaps = ""
     selectingMapsCooldown = 0
     keysDown = [False, False, False, False]
@@ -302,7 +304,7 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT: return
             if event.type == pygame.KEYDOWN:
-                if event.key==pygame.K_ESCAPE:
+                if event.key==eval(f"pygame.K_{config['keybinds']['back']}"):
                     if isPlaying:
                         isPlaying = False
                         loadedObjects = []
@@ -323,7 +325,7 @@ def main():
                     else:
                         pygame.quit()
                         return
-                if event.key==pygame.K_F4:
+                if event.key==eval(f"pygame.K_{config['keybinds']['toggleBackgrounds']}"):
                     if config["backgrounds"]["mapBackground"]["state"]=="true":
                         config["backgrounds"]["mapBackground"]["state"] = "false"
                     else:
@@ -343,7 +345,7 @@ def main():
                                 maps.remove(newMap)
                                 maps = [newMap] + maps # новые песни в начало списка
                     oldmaps = maps
-                elif event.key==pygame.K_F3:
+                elif event.key==eval(f"pygame.K_{config['keybinds']['reload']}"):
                     newMaps = importMaps()
                     maps = reloadMaps()
                     if newMaps!=[]:
@@ -353,7 +355,7 @@ def main():
                                 maps = [newMap] + maps # новые песни в начало списка
                     oldmaps = maps
                     config = configReload()
-                elif event.key==pygame.K_F2 and not isPlaying:
+                elif event.key==eval(f"pygame.K_{config['keybinds']['randomMap']}") and not isPlaying:
                     selectedMapIndex = randint(0, len(maps))
                 elif event.key == pygame.K_RETURN and not isPlaying:
                     if maps==[]: continue 
@@ -382,32 +384,38 @@ def main():
                     playingFrame = pygame.time.get_ticks()
                 else:
                     if isPlaying:
-                        for i in range(len(config["keybinds"])):
-                            if event.key == eval(f"pygame.K_{config['keybinds'][i]}"):
+                        for i in range(len(config["keybinds"]["circles"])):
+                            if event.key == eval(f"pygame.K_{config['keybinds']['circles'][i]}"):
                                 keysDown[i] = True
                                 keysPressed[i] = True
                     else:
                         if event.type==pygame.KEYDOWN:
-                            if event.key==pygame.K_BACKSPACE:
+                            if searchtext=="":
+                                oldIndex = selectedMapIndex
+                            if event.key==pygame.K_BACKSPACE and searchtext!="":
                                 searchtext = searchtext[:-1]
                                 maps = oldmaps
+                                selectedMapIndex = 0
                             if len(pygame.key.name(event.key))<2:
                                 searchtext = searchtext + pygame.key.name(event.key)
+                                selectedMapIndex = 0
                             elif event.key==pygame.K_SPACE:
                                 searchtext = searchtext + " "
+                                selectedMapIndex = 0
                             searchmaps = []
                             for i in maps:
                                 if searchtext.lower() in i.lower(): searchmaps.append(i)
                             maps = searchmaps
-                            selectedMapIndex = 0
-
+                            if searchtext=="":
+                                selectedMapIndex = oldIndex
+                            
             elif event.type == pygame.KEYUP:
                 if (event.key==pygame.K_DOWN or event.key==pygame.K_UP) and not isPlaying:
                     selectingMapsCooldown = 0
                     selectingMaps = ""
                 if isPlaying:
-                    for i in range(len(config["keybinds"])):
-                        if event.key == eval(f'pygame.K_{config["keybinds"][i]}'):
+                    for i in range(len(config["keybinds"]["circles"])):
+                        if event.key == eval(f'pygame.K_{config["keybinds"]["circles"][i]}'):
                             keysDown[i] = False
                             keysReleased[i] = True
                             
@@ -450,7 +458,7 @@ Score: {padding(curScore, 8)}"""
                 pygame.display.flip()
                 while True:
                     event = pygame.event.wait()
-                    if event.type==pygame.QUIT or (event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE):
+                    if event.type==pygame.QUIT or (event.type==pygame.KEYDOWN and event.key==eval(f"pygame.K_{config['keybinds']['back']}")):
                         pygame.quit()
                         return
                     elif event.type==pygame.KEYDOWN and event.key==pygame.K_RETURN: break

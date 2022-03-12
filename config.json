@@ -1,12 +1,13 @@
 {
     "resolution": [1920,1080],
-    "fullscreen": "false",
-	"keybinds": [
-        "q",
-        "w",
-        "LEFTBRACKET",
-        "RIGHTBRACKET"
-    ],
+    "fullscreen": "true",
+	"keybinds": {
+        "circles": ["q","w","LEFTBRACKET", "RIGHTBRACKET"],
+        "back": "ESCAPE",
+        "randomMap": "F2",
+        "reload": "F3",
+        "toggleBackgrounds": "F4"
+    },
     "circleSpeed": 1.9,
     "circleSize": 1.1,
     "audioOffset": 0,
