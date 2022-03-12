@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0312"
+version = "2022.0312-1"
 title = "Libra " + version
 
 def configReload():
@@ -154,10 +154,9 @@ def parseMap(map, config):
     converted = []
     for mapline in mapdata:
         if type=="osu":
-            if config["backgrounds"]["mapBackground"]["state"].lower()=="true":
-                if ("png" in mapline or "jpg" in mapline or "jpeg" in mapline) and mapline[0]=="0":
-                    backgroundfile = mapline.split(",")[2].replace('"', "")
-                    if os.path.exists("maps/"+map+"/"+backgroundfile): background = backgroundfile
+            if ("png" in mapline or "jpg" in mapline or "jpeg" in mapline) and mapline[0]=="0":
+                backgroundfile = mapline.split(",")[2].replace('"', "")
+                if os.path.exists("maps/"+map+"/"+backgroundfile): background = backgroundfile
             if hitObjects==True:
                 splitted = mapline.split(",")
                 noteRow = int((int(splitted[0])*4)/512)
@@ -172,7 +171,6 @@ def parseMap(map, config):
             else:
                 if mapline=="[HitObjects]":
                     hitObjects = True
-    print(converted)
     return [converted, background]
 
 def reloadMaps():
@@ -262,12 +260,12 @@ def main():
     while(1):
         clock.tick(config["fps"])
         screen.fill(BLACK)
+        if config["backgrounds"]["mapBackground"]["state"]=="true" and background!="" and isPlaying:
+            screen.blit(backgroundBg, backgroundBg.get_rect())
         if config["backgrounds"]["userBackgrounds"]["mapSelection"]["file"]!="" and isPlaying==False:
             screen.blit(mapSelectionBg, mapSelectionBg.get_rect())
         elif config["backgrounds"]["userBackgrounds"]["gameplay"]["file"]!="" and isPlaying:
             screen.blit(gameplayBg, gameplayBg.get_rect())
-        if config["backgrounds"]["mapBackground"]["state"]=="true" and background!="" and isPlaying:
-            screen.blit(backgroundBg, backgroundBg.get_rect())
         for i in range(len(keysPressed)):
             keysPressed[i] = False
             keysReleased[i] = False
@@ -325,6 +323,11 @@ def main():
                     else:
                         pygame.quit()
                         return
+                if event.key==pygame.K_F4:
+                    if config["backgrounds"]["mapBackground"]["state"]=="true":
+                        config["backgrounds"]["mapBackground"]["state"] = "false"
+                    else:
+                        config["backgrounds"]["mapBackground"]["state"] = "true"
                 if event.key == pygame.K_DOWN and not isPlaying:
                     selectedMapIndex += 1
                     selectingMaps = "down"
