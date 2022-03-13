@@ -2,7 +2,7 @@
     "resolution": [1920,1080],
     "fullscreen": "true",
 	"keybinds": {
-        "circles": ["q","w","LEFTBRACKET", "RIGHTBRACKET"],
+        "notes": ["q","w","LEFTBRACKET", "RIGHTBRACKET"],
         "back": "ESCAPE",
         "randomMap": "F2",
         "reload": "F3",
@@ -10,8 +10,9 @@
         "toggleUserGameplayBackground": "F4",
         "toggleUserMapSelectionBackground": "F4"
     },
-    "circleSpeed": 1.9,
-    "circleSize": 1.1,
+    "noteType": "circle",
+    "noteSpeed": 1.9,
+    "noteSize": 1.1,
     "audioOffset": 0,
     "fps": 500,
     "mods": {
