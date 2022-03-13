@@ -23,30 +23,62 @@
 	"interface": {
 		"gameplay": {
 			"songName": {
-				"state": "true"
+				"state": "true",
+                "color": [255,255,255]
 			},
 			"accuracy": {
-				"state": "true"
+				"state": "true",
+                "color": [255,255,255]
 			},
 			"combo": {
-				"state": "true"
+				"state": "true",
+                "color": [255,255,255]
 			},
 			"judgement": {
 				"state": "true"
 			},
 			"judgementCounter": {
-				"state": "true"
+				"state": "true",
+                "textColor": [255,255,255]
 			},
 			"hitOverlay": {
 				"state": "true"
 			},
 			"score": {
-				"state": "true"
+				"state": "true",
+                "color": [255,255,255]
 			},
 			"mods": {
-				"state": "true"
+				"state": "true",
+                "color": [255,255,255]
 			}
-		}
+		},
+        "mapSelection": {
+            "maps": {
+                "color": [255,255,255]
+            },
+            "search": {
+                "color": [255,255,255]
+            },
+            "mapsHeader": {
+                "color": [255,255,255]
+            },
+            "mapsLine": {
+                "color": [255,255,255]
+            }
+        },
+        "title": {
+            "color": [255,255,255]
+        },
+        "updateText": {
+            "color": [255,255,255]
+        },
+        "mapParsing": {
+            "color": [255,255,255]
+        },
+        "ranking": {
+            "color": [255,255,255]
+        }
 	},
     "backgrounds": {
         "userBackgrounds": {
@@ -69,12 +101,12 @@
         90,
         22
     ],
-	"rgbSpeed": 0.1,
+	"rgbSpeed": 0.05,
     "hitColors": [
-        [255,0,0],
-        [255,0,255],
-        [100,255,100],
-        [255,255,0]
+        [171,0,0],
+        [171,170,0],
+        [0,171,111],
+        [0,167,171]
     ],
     "colors": [
         [171,171,171],

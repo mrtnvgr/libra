@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0313-1"
+version = "2022.0313-2"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -34,30 +34,62 @@ DEFAULT_CONFIG = """{
 	"interface": {
 		"gameplay": {
 			"songName": {
-				"state": "true"
+				"state": "true",
+                "color": [255,255,255]
 			},
 			"accuracy": {
-				"state": "true"
+				"state": "true",
+                "color": [255,255,255]
 			},
 			"combo": {
-				"state": "true"
+				"state": "true",
+                "color": [255,255,255]
 			},
 			"judgement": {
 				"state": "true"
 			},
 			"judgementCounter": {
-				"state": "true"
+				"state": "true",
+                "textColor": [255,255,255]
 			},
 			"hitOverlay": {
 				"state": "true"
 			},
 			"score": {
-				"state": "true"
+				"state": "true",
+                "color": [255,255,255]
 			},
 			"mods": {
-				"state": "true"
+				"state": "true",
+                "color": [255,255,255]
 			}
-		}
+		},
+        "mapSelection": {
+            "maps": {
+                "color": [255,255,255]
+            },
+            "search": {
+                "color": [255,255,255]
+            },
+            "mapsHeader": {
+                "color": [255,255,255]
+            },
+            "mapsLine": {
+                "color": [255,255,255]
+            }
+        },
+        "title": {
+            "color": [255,255,255]
+        },
+        "updateText": {
+            "color": [255,255,255]
+        },
+        "mapParsing": {
+            "color": [255,255,255]
+        },
+        "ranking": {
+            "color": [255,255,255]
+        }
 	},
     "backgrounds": {
         "userBackgrounds": {
@@ -80,12 +112,12 @@ DEFAULT_CONFIG = """{
         90,
         22
     ],
-	"rgbSpeed": 0.1,
+	"rgbSpeed": 0.05,
     "hitColors": [
-        [255,0,0],
-        [255,0,255],
-        [100,255,100],
-        [255,255,0]
+        [171,0,0],
+        [171,170,0],
+        [0,171,111],
+        [0,167,171]
     ],
     "colors": [
         [171,171,171],
@@ -122,7 +154,6 @@ pygame.mouse.set_visible(False)
 pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.KEYUP])
 
 BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
 
 font = pygame.font.SysFont('Arial', 25)
 fontBold = pygame.font.SysFont('Arial', 25, bold=True)
@@ -136,8 +167,8 @@ if config["autoUpdate"].lower()=="true":
         print("No internet connection!")
         remote_version = version
     if remote_version!=version:
-        screen.blit(fontBold.render(title, True, WHITE), (0,0))
-        screen.blit(fontBold.render("Updating...", True, WHITE), (0,20))
+        screen.blit(fontBold.render(title, True, tuple(config["interface"]["title"]["color"])), (0,0))
+        screen.blit(fontBold.render("Updating...", True, tuple(config["interface"]["updateText"]["color"])), (0,20))
         pygame.display.flip()
         if os.name=="nt":
             os_prefix = ".exe"
@@ -196,8 +227,8 @@ def importMaps():
     for dir in files:
             if ".osz" in dir:
                 screen.fill(BLACK)
-                screen.blit(fontBold.render(title, True, WHITE), (0,0))
-                screen.blit(fontBold.render("Unzipping...", True, WHITE), (0,20))
+                screen.blit(fontBold.render(title, True, tuple(config["interface"]["title"]["color"])), (0,0))
+                screen.blit(fontBold.render("Unzipping...", True, tuple(config["interface"]["mapParsing"]["color"])), (0,20))
                 pygame.display.flip()
                 oszfile = zipfile.ZipFile(os.path.join('maps/', dir))
                 for diff in oszfile.namelist():
@@ -268,12 +299,12 @@ def main():
         mapSelectionBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["mapSelection"]['file']).convert()
     if config["backgrounds"]["userBackgrounds"]["gameplay"]["state"].lower()=="true":
         gameplayBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["gameplay"]["file"]).convert()
-    rgbStates = []
+    rgbColorsStates = []
     for i in range(4):
         if config["colors"][i]=="rgb":
-            rgbStates.append(True)
+            rgbColorsStates.append(True)
         else:
-            rgbStates.append(False)
+            rgbColorsStates.append(False)
     while(1):
         clock.tick(config["fps"])
         screen.fill(BLACK)
@@ -317,12 +348,12 @@ def main():
             pygame.mixer.music.stop()
 
         # rgb logic
+        if rgbHue==360: rgbHue = 0
+        rgbHue += config["rgbSpeed"]
+        rgbColor = hsv2rgb(rgbHue/360,35/100,69/100)
         for i in range(4):
-            if rgbStates[i]==True:
-                if rgbHue==360: rgbHue = 0
-                rgbHue += config["rgbSpeed"]
-                config["colors"][i] = hsv2rgb(rgbHue/360,35/100,69/100)
-
+            if rgbColorsStates[i]==True:
+                config["colors"][i] = rgbColor
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT: return 0
@@ -474,9 +505,9 @@ Score: {padding(curScore, 8)}"""
                         os.mkdir("scores")
                     open("scores/"+maps[selectedMapIndex]+f" ({time}).scr", "w").write(data)
                 screen.fill(BLACK)
-                screen.blit(fontBold.render(title, True, WHITE), (0,0))
+                screen.blit(fontBold.render(title, True, tuple(config["interface"]["title"]["color"])), (0,0))
                 for i, l in enumerate(data.splitlines()):
-                    screen.blit(font.render(l, True, WHITE), (0, 25 + 25*i))
+                    screen.blit(font.render(l, True, tuple(config["interface"]["ranking"]["color"])), (0, 25 + 25*i))
                 pygame.display.flip()
                 while True:
                     event = pygame.event.wait()
@@ -631,23 +662,23 @@ Score: {padding(curScore, 8)}"""
                 screen.blit(fontBold.render("Good: ", True, config["hitColors"][2]), (config["resolution"][0]-157, config["resolution"][1]-270))
                 screen.blit(fontBold.render("Bad: ", True, config["hitColors"][1]), (config["resolution"][0]-140, config["resolution"][1]-245))
                 screen.blit(fontBold.render("Miss: ", True, config["hitColors"][0]), (config["resolution"][0]-149, config["resolution"][1]-220))
-                screen.blit(font.render(f"{padding(hitCount['perfect'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-295))
-                screen.blit(font.render(f"{padding(hitCount['good'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-270))
-                screen.blit(font.render(f"{padding(hitCount['bad'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-245))
-                screen.blit(font.render(f"{padding(hitCount['miss'], 4)}", True, WHITE), (config["resolution"][0]-80, config["resolution"][1]-220))
+                screen.blit(font.render(f"{padding(hitCount['perfect'], 4)}", True, tuple(config["interface"]["gameplay"]["judgementCounter"]["textColor"])), (config["resolution"][0]-80, config["resolution"][1]-295))
+                screen.blit(font.render(f"{padding(hitCount['good'], 4)}", True, tuple(config["interface"]["gameplay"]["judgementCounter"]["textColor"])), (config["resolution"][0]-80, config["resolution"][1]-270))
+                screen.blit(font.render(f"{padding(hitCount['bad'], 4)}", True, tuple(config["interface"]["gameplay"]["judgementCounter"]["textColor"])), (config["resolution"][0]-80, config["resolution"][1]-245))
+                screen.blit(font.render(f"{padding(hitCount['miss'], 4)}", True, tuple(config["interface"]["gameplay"]["judgementCounter"]["textColor"])), (config["resolution"][0]-80, config["resolution"][1]-220))
             
-            if config["interface"]["gameplay"]["score"]["state"].lower()=="true": screen.blit(fontScore.render(padding(curScore, 8), True, WHITE), (config["resolution"][0]-265, 0))
+            if config["interface"]["gameplay"]["score"]["state"].lower()=="true": screen.blit(fontScore.render(padding(curScore, 8), True, tuple(config["interface"]["gameplay"]["score"]["color"])), (config["resolution"][0]-265, 0))
             
-            if config["interface"]["gameplay"]["combo"]["state"].lower()=="true": screen.blit(fontScore.render(str(combo)+"x", True, WHITE), (0,config["resolution"][1]-85))
+            if config["interface"]["gameplay"]["combo"]["state"].lower()=="true": screen.blit(fontScore.render(str(combo)+"x", True, tuple(config["interface"]["gameplay"]["accuracy"]["color"])), (0,config["resolution"][1]-85))
             
-            if config["interface"]["gameplay"]["songName"]["state"].lower()=="true": screen.blit(font.render(maps[selectedMapIndex], True, WHITE), (0,0))
+            if config["interface"]["gameplay"]["songName"]["state"].lower()=="true": screen.blit(font.render(maps[selectedMapIndex], True, tuple(config["interface"]["gameplay"]["songName"]["color"])), (0,0))
             
             totalObjects = hitCount['miss']+hitCount['bad']+hitCount['good']+hitCount['perfect']
             if totalObjects!=0:
                 accuracy = int(100*((50*hitCount['bad'])+(100*hitCount['good'])+(300*(hitCount['perfect']+totalObjects)) )/( 300*(hitCount['bad']+hitCount['good']+hitCount['perfect']+hitCount["miss"]+totalObjects)))
             else:
                 accuracy = "100"
-            if config["interface"]["gameplay"]["accuracy"]["state"].lower()=="true": screen.blit(fontScore.render(str(accuracy)+"%", True, WHITE), (0, 20))
+            if config["interface"]["gameplay"]["accuracy"]["state"].lower()=="true": screen.blit(fontScore.render(str(accuracy)+"%", True, tuple(config["interface"]["gameplay"]["accuracy"]["color"])), (0, 20))
             
             if config["interface"]["gameplay"]["mods"]["state"].lower()=="true":
                 mods = []
@@ -656,7 +687,7 @@ Score: {padding(curScore, 8)}"""
                     if config["mods"][i].lower()=="true":
                         mods.append(i)
                         length = length+len(i)
-                if mods!=[]: screen.blit(font.render("Mods: " + ' '.join(mods), True, WHITE), (config["resolution"][0]-(length*25), 60))
+                if mods!=[]: screen.blit(font.render("Mods: " + ' '.join(mods), True, tuple(config["interface"]["gameplay"]["mods"]["color"])), (config["resolution"][0]-(length*25), 60))
                 
             if config["interface"]["gameplay"]["hitOverlay"]["state"].lower()=="true":
                 for i in range(len(keysDown)):
@@ -667,14 +698,14 @@ Score: {padding(curScore, 8)}"""
                     pygame.draw.rect(screen, config["colors"][i], (config["resolution"][0]-20,config["resolution"][1]-25-i*25,20,20), overlayBorder)
 
         else:
-            screen.blit(fontBold.render(title, True, WHITE), (0,0))
-            screen.blit(fontBold.render("Maps:", True, WHITE), (0,20))
-            pygame.draw.rect(screen, WHITE, pygame.Rect(0, 63, 15, 29))
+            screen.blit(fontBold.render(title, True, tuple(config["interface"]["title"]["color"])), (0,0))
+            screen.blit(fontBold.render("Maps:", True, tuple(config["interface"]["mapSelection"]["mapsHeader"]["color"])), (0,20))
+            pygame.draw.rect(screen, tuple(config["interface"]["mapSelection"]["mapsLine"]["color"]), pygame.Rect(0, 63, 15, 29))
             if searchtext!="":
-                screen.blit(fontBold.render("Search: "+searchtext, True, WHITE), (0,40))
+                screen.blit(fontBold.render("Search: "+searchtext, True, tuple(config["interface"]["mapSelection"]["search"]["color"])), (0,40))
             rendermaps = maps[selectedMapIndex:selectedMapIndex+(config["resolution"][1]-95)//25]
             for i in range(len(rendermaps)):
-                screen.blit(font.render(rendermaps[i], True, WHITE), (30, 65 + i * 25))
+                screen.blit(font.render(rendermaps[i], True, tuple(config["interface"]["mapSelection"]["maps"]["color"])), (30, 65 + i * 25))
 
         pygame.display.flip()
 
