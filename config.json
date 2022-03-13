@@ -6,7 +6,9 @@
         "back": "ESCAPE",
         "randomMap": "F2",
         "reload": "F3",
-        "toggleBackgrounds": "F4"
+        "toggleMapBackground": "F4",
+        "toggleUserGameplayBackground": "F4",
+        "toggleUserMapSelectionBackground": "F4"
     },
     "circleSpeed": 1.9,
     "circleSize": 1.1,
@@ -49,9 +51,11 @@
     "backgrounds": {
         "userBackgrounds": {
 			"mapSelection": {
+                "state": "false",
 				"file": ""
 			},
 			"gameplay": {
+                "state": "false",
 				"file": ""
 			}
         },

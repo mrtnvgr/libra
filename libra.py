@@ -7,17 +7,9 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0312-3"
+version = "2022.0313"
 title = "Libra " + version
-
-def configReload():
-    while(1):
-        try:
-            config = json.load(open("config.json"))
-            break
-        except FileNotFoundError:
-            print("Config does not exist. Writing default")
-            data = """{
+DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
     "fullscreen": "true",
 	"keybinds": {
@@ -25,7 +17,9 @@ def configReload():
         "back": "ESCAPE",
         "randomMap": "F2",
         "reload": "F3",
-        "toggleBackgrounds": "F4"
+        "toggleMapBackground": "F4",
+        "toggleUserGameplayBackground": "F4",
+        "toggleUserMapSelectionBackground": "F4"
     },
     "circleSpeed": 1.9,
     "circleSize": 1.1,
@@ -68,9 +62,11 @@ def configReload():
     "backgrounds": {
         "userBackgrounds": {
 			"mapSelection": {
+                "state": "false",
 				"file": ""
 			},
 			"gameplay": {
+                "state": "false",
 				"file": ""
 			}
         },
@@ -98,7 +94,16 @@ def configReload():
     ],
     "autoUpdate": "true"
 }"""
-            open("config.json", "w").write(data)
+
+
+def configReload():
+    while(1):
+        try:
+            config = json.load(open("config.json"))
+            break
+        except FileNotFoundError:
+            print("Config does not exist. Writing default")
+            open("config.json", "w").write(DEFAULT_CONFIG)
             continue
     if config["mods"]["hardrock"].lower()=="true":
         for i in range(len(config["hitwindow"])): config["hitwindow"][i] = config["hitwindow"][i]//1.5
@@ -255,18 +260,18 @@ def main():
     oldmaps = maps
     config = configReload()
     background = ""
-    if config["backgrounds"]["userBackgrounds"]["mapSelection"]["file"]!="":
+    if config["backgrounds"]["userBackgrounds"]["mapSelection"]["state"].lower()=="true":
         mapSelectionBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["mapSelection"]['file']).convert()
-    if config["backgrounds"]["userBackgrounds"]["gameplay"]["file"]!="":
+    if config["backgrounds"]["userBackgrounds"]["gameplay"]["state"].lower()=="true":
         gameplayBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["gameplay"]["file"]).convert()
     while(1):
         clock.tick(config["fps"])
         screen.fill(BLACK)
         if config["backgrounds"]["mapBackground"]["state"]=="true" and background!="" and isPlaying:
             screen.blit(backgroundBg, backgroundBg.get_rect())
-        if config["backgrounds"]["userBackgrounds"]["mapSelection"]["file"]!="" and isPlaying==False:
+        if config["backgrounds"]["userBackgrounds"]["mapSelection"]["state"].lower()=="true" and isPlaying==False:
             screen.blit(mapSelectionBg, mapSelectionBg.get_rect())
-        elif config["backgrounds"]["userBackgrounds"]["gameplay"]["file"]!="" and isPlaying:
+        elif config["backgrounds"]["userBackgrounds"]["gameplay"]["state"].lower()=="true" and isPlaying:
             screen.blit(gameplayBg, gameplayBg.get_rect())
         for i in range(len(keysPressed)):
             keysPressed[i] = False
@@ -302,7 +307,7 @@ def main():
             pygame.mixer.music.stop()
 
         for event in pygame.event.get():
-            if event.type == pygame.QUIT: return
+            if event.type == pygame.QUIT: return 0
             if event.type == pygame.KEYDOWN:
                 if event.key==eval(f"pygame.K_{config['keybinds']['back']}"):
                     if isPlaying:
@@ -324,12 +329,13 @@ def main():
                         pygame.mixer.music.stop()
                     else:
                         pygame.quit()
-                        return
-                if event.key==eval(f"pygame.K_{config['keybinds']['toggleBackgrounds']}"):
-                    if config["backgrounds"]["mapBackground"]["state"]=="true":
-                        config["backgrounds"]["mapBackground"]["state"] = "false"
-                    else:
-                        config["backgrounds"]["mapBackground"]["state"] = "true"
+                        return 0
+                if event.key==eval(f"pygame.K_{config['keybinds']['toggleMapBackground']}"):
+                    config["backgrounds"]["mapBackground"]["state"] = 'true' if config["backgrounds"]["mapBackground"]["state"] == 'false' else 'false'
+                elif event.key==eval(f"pygame.K_{config['keybinds']['toggleUserGameplayBackground']}"):
+                    config["backgrounds"]["userBackgrounds"]["gameplay"]["state"] = 'true' if config["backgrounds"]["userBackgrounds"]["gameplay"]["state"] == 'false' else 'false'
+                elif event.key==eval(f"pygame.K_{config['keybinds']['toggleUserMapSelectionBackground']}"):
+                    config["backgrounds"]["userBackgrounds"]["mapSelection"]["state"] = 'true' if config["backgrounds"]["userBackgrounds"]["mapSelection"]["state"] == 'false' else 'false'
                 if event.key == pygame.K_DOWN and not isPlaying:
                     selectedMapIndex += 1
                     selectingMaps = "down"
@@ -460,7 +466,7 @@ Score: {padding(curScore, 8)}"""
                     event = pygame.event.wait()
                     if event.type==pygame.QUIT or (event.type==pygame.KEYDOWN and event.key==eval(f"pygame.K_{config['keybinds']['back']}")):
                         pygame.quit()
-                        return
+                        return 0
                     elif event.type==pygame.KEYDOWN and event.key==pygame.K_RETURN: break
                 loadedObjects = []
                 keysDown = [False, False, False, False]
