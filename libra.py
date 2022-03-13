@@ -1,13 +1,13 @@
 #!/bin/python3
 from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-import pygame, math, os, sys, requests, shutil, datetime, json, zipfile
+import pygame, math, os, sys, requests, shutil, datetime, json, zipfile, colorsys
 from natsort import natsorted, IGNORECASE
 from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0313"
+version = "2022.0313-1"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -72,7 +72,7 @@ DEFAULT_CONFIG = """{
         },
 		"mapBackground": {
 			"state": "true",
-			"brightness": 80
+			"brightness": 40
 		}
     },
 	"hitwindow": [
@@ -80,6 +80,7 @@ DEFAULT_CONFIG = """{
         90,
         22
     ],
+	"rgbSpeed": 0.1,
     "hitColors": [
         [255,0,0],
         [255,0,255],
@@ -88,13 +89,12 @@ DEFAULT_CONFIG = """{
     ],
     "colors": [
         [171,171,171],
-        [3,116,170],
-        [3,116,170],
+        "rgb",
+		"rgb",
         [171,171,171]
     ],
     "autoUpdate": "true"
 }"""
-
 
 def configReload():
     while(1):
@@ -149,6 +149,9 @@ if config["autoUpdate"].lower()=="true":
 def padding(score, max):
     ret = str(math.floor(score))
     return "0" * (max - len(ret)) + ret
+
+def hsv2rgb(h,s,v):
+    return [round(i * 255) for i in colorsys.hsv_to_rgb(h,s,v)]
 
 def parseMap(map, config):
     if os.path.exists("maps/"+map+"/map.osu")==True:
@@ -246,6 +249,7 @@ def main():
     }
     hit = ""
     searchtext = ""
+    rgbHue = 0
     try:
         os.listdir('maps/')
     except FileNotFoundError:
@@ -264,6 +268,12 @@ def main():
         mapSelectionBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["mapSelection"]['file']).convert()
     if config["backgrounds"]["userBackgrounds"]["gameplay"]["state"].lower()=="true":
         gameplayBg = pygame.image.load(config["backgrounds"]["userBackgrounds"]["gameplay"]["file"]).convert()
+    rgbStates = []
+    for i in range(4):
+        if config["colors"][i]=="rgb":
+            rgbStates.append(True)
+        else:
+            rgbStates.append(False)
     while(1):
         clock.tick(config["fps"])
         screen.fill(BLACK)
@@ -305,6 +315,14 @@ def main():
             }
             hit = ""
             pygame.mixer.music.stop()
+
+        # rgb logic
+        for i in range(4):
+            if rgbStates[i]==True:
+                if rgbHue==360: rgbHue = 0
+                rgbHue += config["rgbSpeed"]
+                config["colors"][i] = hsv2rgb(rgbHue/360,35/100,69/100)
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT: return 0
@@ -351,7 +369,7 @@ def main():
                                 maps.remove(newMap)
                                 maps = [newMap] + maps # новые песни в начало списка
                     oldmaps = maps
-                elif event.key==eval(f"pygame.K_{config['keybinds']['reload']}"):
+                elif event.key==eval(f"pygame.K_{config['keybinds']['reload']}") and not isPlaying:
                     newMaps = importMaps()
                     maps = reloadMaps()
                     if newMaps!=[]:
@@ -427,11 +445,9 @@ def main():
                             
         for i in range(len(keysDown)):
             if isPlaying:
+                pygame.draw.circle(screen, config["colors"][i], ((config["resolution"][0]/2)-220 + i * int(140*config["circleSize"]), config["resolution"][1]-100), int(60*config["circleSize"]), 5)
                 if keysDown[i]:
-                    pygame.draw.circle(screen, config["colors"][i], ((config["resolution"][0]/2)-220 + i * int(140*config["circleSize"]), config["resolution"][1]-100), int(60*config["circleSize"]), 5)
                     pygame.draw.circle(screen, config["colors"][i], ((config["resolution"][0]/2)-220 + i * int(140*config["circleSize"]), config["resolution"][1]-100), int(60*config["circleSize"]))
-                else:
-                    pygame.draw.circle(screen, WHITE, ((config["resolution"][0]/2)-220 + i * int(140*config["circleSize"]), config["resolution"][1]-100), int(60*config["circleSize"]), 5)
         if isPlaying and playingFrame + 1000 < pygame.time.get_ticks():
             if len(loadedObjects) == 0:
                 isPlaying = False
@@ -645,12 +661,10 @@ Score: {padding(curScore, 8)}"""
             if config["interface"]["gameplay"]["hitOverlay"]["state"].lower()=="true":
                 for i in range(len(keysDown)):
                     if keysDown[i]==True:
-                        overlayColor = config["colors"][i]
                         overlayBorder = 25
                     else:
-                        overlayColor = WHITE
                         overlayBorder = 2
-                    pygame.draw.rect(screen, overlayColor, (config["resolution"][0]-20,config["resolution"][1]-25-i*25,20,20), overlayBorder)
+                    pygame.draw.rect(screen, config["colors"][i], (config["resolution"][0]-20,config["resolution"][1]-25-i*25,20,20), overlayBorder)
 
         else:
             screen.blit(fontBold.render(title, True, WHITE), (0,0))

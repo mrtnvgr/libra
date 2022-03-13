@@ -61,7 +61,7 @@
         },
 		"mapBackground": {
 			"state": "true",
-			"brightness": 80
+			"brightness": 40
 		}
     },
 	"hitwindow": [
@@ -69,6 +69,7 @@
         90,
         22
     ],
+	"rgbSpeed": 0.1,
     "hitColors": [
         [255,0,0],
         [255,0,255],
@@ -77,8 +78,8 @@
     ],
     "colors": [
         [171,171,171],
-        [3,116,170],
-        [3,116,170],
+        "rgb",
+		"rgb",
         [171,171,171]
     ],
     "autoUpdate": "true"
