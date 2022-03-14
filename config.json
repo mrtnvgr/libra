@@ -10,7 +10,7 @@
         "toggleUserGameplayBackground": "F4",
         "toggleUserMapSelectionBackground": "F4"
     },
-    "noteType": "circle",
+    "noteType": "bar",
     "noteSpeed": 1.9,
     "noteSize": 1.1,
     "audioOffset": 0,

@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0313-3"
+version = "2022.0314"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -21,7 +21,7 @@ DEFAULT_CONFIG = """{
         "toggleUserGameplayBackground": "F4",
         "toggleUserMapSelectionBackground": "F4"
     },
-    "noteType": "circle",
+    "noteType": "bar",
     "noteSpeed": 1.9,
     "noteSize": 1.1,
     "audioOffset": 0,
@@ -309,6 +309,21 @@ def main():
     while(1):
         clock.tick(config["fps"])
         screen.fill(BLACK)
+        if not isPlaying and loadedObjects!=[]:
+            loadedObjects = []
+            keysDown = [False, False, False, False]
+            keysPressed = [False, False, False, False]
+            keysReleased = [False, False, False, False]
+            maxCombo = 0
+            combo = 0
+            curScore = 0.0
+            hitCount = {
+                "perfect": 0,
+                "good": 0,
+                "bad": 0,
+                "miss": 0
+            }
+            hit = ""
         if config["backgrounds"]["mapBackground"]["state"]=="true" and background!="" and isPlaying:
             screen.blit(backgroundBg, backgroundBg.get_rect())
         if config["backgrounds"]["userBackgrounds"]["mapSelection"]["state"].lower()=="true" and isPlaying==False:
@@ -322,7 +337,7 @@ def main():
             selectedMapIndex = len(maps)-1
         elif selectedMapIndex==len(maps):
             selectedMapIndex = 0
-        if selectingMaps!="":
+        if selectingMaps!="" and not isPlaying:
             if selectingMapsCooldown==(config["fps"]//12):
                 if selectingMaps=="down":
                     selectedMapIndex += 1
@@ -333,19 +348,6 @@ def main():
         
         if config["mods"]["suddenDeath"].lower()=="true" and hitCount["miss"]>0:
             isPlaying = False
-            loadedObjects = []
-            keysDown = [False, False, False, False]
-            keysPressed = [False, False, False, False]
-            maxCombo = 0
-            combo = 0
-            curScore = 0.0
-            hitCount = {
-                "perfect": 0,
-                "good": 0,
-                "bad": 0,
-                "miss": 0
-            }
-            hit = ""
             pygame.mixer.music.stop()
 
         # rgb logic
@@ -361,21 +363,8 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key==eval(f"pygame.K_{config['keybinds']['back']}"):
                     if isPlaying:
+                        selectingMaps = ""
                         isPlaying = False
-                        loadedObjects = []
-                        keysDown = [False, False, False, False]
-                        keysPressed = [False, False, False, False]
-                        keysReleased = [False, False, False, False]
-                        combo = 0
-                        maxCombo = 0
-                        curScore = 0.0
-                        hitCount = {
-                            "perfect": 0,
-                            "good": 0,
-                            "bad": 0,
-                            "miss": 0
-                        }
-                        hit = ""
                         pygame.mixer.music.stop()
                     else:
                         pygame.quit()
