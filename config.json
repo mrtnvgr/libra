@@ -10,9 +10,11 @@
         "toggleUserGameplayBackground": "F4",
         "toggleUserMapSelectionBackground": "F4"
     },
-    "noteType": "bar",
-    "noteSpeed": 1.9,
-    "noteSize": 1.1,
+	"note": {
+		"type": "bar",
+		"speed": 1.9,
+		"size": 0.95
+	},
     "audioOffset": 0,
     "fps": 500,
     "mods": {
@@ -119,7 +121,11 @@
         90,
         22
     ],
-	"rgbSpeed": 0.05,
+    "rgb": {
+        "speed": 0.05,
+        "saturation": 35,
+        "value": 69
+    },
     "hitColors": [
         [171,0,0],
         [171,170,0],
