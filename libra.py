@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0315"
+version = "2022.0315-1"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -321,7 +321,7 @@ def aboutLoop():
             elif event.type==pygame.QUIT:
                 return 0
         abouttext = """
-Буруня"""
+L18RA(Libra) - customizable VSRG client"""
         for i, l in enumerate(abouttext.splitlines()):
                     screen.blit(fontBold.render(l, True, tuple(config["interface"]["aboutText"]["color"])), (0, 25*i))
         pygame.display.flip()
@@ -614,11 +614,12 @@ Score: {padding(curScore, 8)}"""
                             pygame.draw.rect(screen, config["colors"][obj[1]], pygame.Rect(config["resolution"][0]/2-286 + obj[1] * int(140*config["noteSize"]), config["resolution"][1]-101 - (obj[0] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["noteSpeed"], int(120*config["noteSize"]),50))
                         pygame.draw.rect(screen, config["colors"][obj[1]], pygame.Rect(config["resolution"][0]/2-286 + obj[1] * int(140*config["noteSize"]), config["resolution"][1]-101 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["noteSpeed"], int(120*config["noteSize"]),50))
 
-
                     if int(config["noteSize"])==0: 
                         noteOffset = abs(int(config["noteSize"]*10)-10)*6
                     else:
                         noteOffset = -int(config["noteSize"]%1*60)
+                    if config["noteType"]=="bar":
+                        noteOffset = -noteOffset
                     rect1 = (config["resolution"][0]/2)-280+noteOffset + obj[1] * int(140*config["noteSize"])
                     rect2 = config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - 2000 - playingFrame)) * config["noteSpeed"]
                     rect3 = (120*config["noteSize"])
