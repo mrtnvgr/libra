@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0314"
+version = "2022.0315"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -79,6 +79,20 @@ DEFAULT_CONFIG = """{
                 "color": [255,255,255]
             }
         },
+		"mainMenu": {
+			"title": {
+				"color": [255,255,255]
+			},
+			"options": {
+				"color": [255,255,255]
+			},
+			"optionsLine": {
+				"color": [255,255,255]
+			},
+			"version": {
+				"color": [255,255,255]
+			}
+		},
         "title": {
             "color": [255,255,255]
         },
@@ -90,7 +104,10 @@ DEFAULT_CONFIG = """{
         },
         "ranking": {
             "color": [255,255,255]
-        }
+        },
+		"aboutText": {
+			"color": [255,255,255]
+		}
 	},
     "backgrounds": {
         "userBackgrounds": {
@@ -128,7 +145,6 @@ DEFAULT_CONFIG = """{
     ],
     "autoUpdate": "true"
 }"""
-
 def configReload():
     while(1):
         try:
@@ -159,6 +175,7 @@ BLACK = (0, 0, 0)
 font = pygame.font.SysFont('Arial', 25)
 fontBold = pygame.font.SysFont('Arial', 25, bold=True)
 fontScore = pygame.font.SysFont('Arial', 60)
+fontMMTitle = pygame.font.SysFont('Arial', 80, bold=True)
 
 # check updates
 if config["autoUpdate"].lower()=="true":
@@ -258,7 +275,58 @@ def importMaps():
                 os.remove(os.path.join('maps/', dir))
     return newMaps
 
-def main():
+def mmLoop():
+    mmIndex = 0
+    mmElements = ["Singleplayer", "About", "Exit"]
+    while(1):
+        clock.tick(config["fps"])
+        screen.fill(BLACK)
+        for event in pygame.event.get():
+            if event.type==pygame.KEYDOWN:
+                if event.key==pygame.K_UP and mmIndex>0:
+                    mmIndex -= 1
+                elif event.key==pygame.K_DOWN and mmIndex<len(mmElements)-1:
+                    mmIndex += 1
+                elif event.key==eval(f"pygame.K_{config['keybinds']['back']}"):
+                    return 0
+                elif event.key==pygame.K_RETURN:
+                    if mmIndex==0:
+                        return "GAME"
+                    elif mmIndex==1:
+                        return "ABOUT"
+                    elif mmIndex==2:
+                        return "EXIT"
+            elif event.type==pygame.QUIT:
+                return 0
+        text = fontMMTitle.render("L18RA", True, tuple(config["interface"]["mainMenu"]["title"]["color"]))
+        text_rect = text.get_rect(center=(config["resolution"][0]/2, 100))
+        screen.blit(text, text_rect)
+        position = 300
+        for i in range(len(mmElements)):
+            screen.blit(fontBold.render(mmElements[i], True, tuple(config["interface"]["mainMenu"]["options"]["color"])), (30,position))
+            if mmIndex==i:
+                pygame.draw.rect(screen, tuple(config["interface"]["mainMenu"]["optionsLine"]["color"]), pygame.Rect(0, position, 15, 29))
+            position += 30
+        screen.blit(fontBold.render("Build: " + version, True, tuple(config["interface"]["mainMenu"]["version"]["color"])), (0,config["resolution"][1]-50))
+        pygame.display.flip()
+
+def aboutLoop():
+    while(1):
+        clock.tick(config["fps"])
+        screen.fill(BLACK)
+        for event in pygame.event.get():
+            if event.type==pygame.KEYDOWN:
+                if event.key==eval(f"pygame.K_{config['keybinds']['back']}") or event.key==pygame.K_RETURN:
+                    return
+            elif event.type==pygame.QUIT:
+                return 0
+        abouttext = """
+Буруня"""
+        for i, l in enumerate(abouttext.splitlines()):
+                    screen.blit(fontBold.render(l, True, tuple(config["interface"]["aboutText"]["color"])), (0, 25*i))
+        pygame.display.flip()
+
+def gameLoop():
     loadedMap = []
     loadedObjects = []
     selectedMapIndex = 0
@@ -367,8 +435,7 @@ def main():
                         isPlaying = False
                         pygame.mixer.music.stop()
                     else:
-                        pygame.quit()
-                        return 0
+                        return
                 if event.key==eval(f"pygame.K_{config['keybinds']['toggleMapBackground']}"):
                     config["backgrounds"]["mapBackground"]["state"] = 'true' if config["backgrounds"]["mapBackground"]["state"] == 'false' else 'false'
                 elif event.key==eval(f"pygame.K_{config['keybinds']['toggleUserGameplayBackground']}"):
@@ -507,9 +574,10 @@ Score: {padding(curScore, 8)}"""
                 pygame.display.flip()
                 while True:
                     event = pygame.event.wait()
-                    if event.type==pygame.QUIT or (event.type==pygame.KEYDOWN and event.key==eval(f"pygame.K_{config['keybinds']['back']}")):
-                        pygame.quit()
+                    if event.type==pygame.QUIT:
                         return 0
+                    elif (event.type==pygame.KEYDOWN and event.key==eval(f"pygame.K_{config['keybinds']['back']}")):
+                        return
                     elif event.type==pygame.KEYDOWN and event.key==pygame.K_RETURN: break
                 loadedObjects = []
                 keysDown = [False, False, False, False]
@@ -704,16 +772,26 @@ Score: {padding(curScore, 8)}"""
                     pygame.draw.rect(screen, config["colors"][i], (config["resolution"][0]-20,config["resolution"][1]-25-i*25,20,20), overlayBorder)
 
         else:
-            screen.blit(fontBold.render(title, True, tuple(config["interface"]["title"]["color"])), (0,0))
-            screen.blit(fontBold.render("Maps:", True, tuple(config["interface"]["mapSelection"]["mapsHeader"]["color"])), (0,20))
-            pygame.draw.rect(screen, tuple(config["interface"]["mapSelection"]["mapsLine"]["color"]), pygame.Rect(0, 63, 15, 29))
+            #screen.blit(fontBold.render(title, True, tuple(config["interface"]["title"]["color"])), (0,0))
+            screen.blit(fontBold.render("Maps:", True, tuple(config["interface"]["mapSelection"]["mapsHeader"]["color"])), (0,0))
+            pygame.draw.rect(screen, tuple(config["interface"]["mapSelection"]["mapsLine"]["color"]), pygame.Rect(0, 43, 15, 29))
             if searchtext!="":
-                screen.blit(fontBold.render("Search: "+searchtext, True, tuple(config["interface"]["mapSelection"]["search"]["color"])), (0,40))
-            rendermaps = maps[selectedMapIndex:selectedMapIndex+(config["resolution"][1]-95)//25]
+                screen.blit(fontBold.render("Search: "+searchtext, True, tuple(config["interface"]["mapSelection"]["search"]["color"])), (0,20))
+            rendermaps = maps[selectedMapIndex:selectedMapIndex+(config["resolution"][1]-75)//25]
             for i in range(len(rendermaps)):
-                screen.blit(font.render(rendermaps[i], True, tuple(config["interface"]["mapSelection"]["maps"]["color"])), (30, 65 + i * 25))
+                screen.blit(font.render(rendermaps[i], True, tuple(config["interface"]["mapSelection"]["maps"]["color"])), (30, 45 + i * 25))
 
         pygame.display.flip()
 
-if __name__ == "__main__":
-    main()
+while(1):
+    if __name__ == "__main__":
+        exitcode = mmLoop()
+        if exitcode==0 or exitcode=="EXIT": break
+        elif exitcode=="ABOUT":
+            exitcode = aboutLoop()
+            if exitcode==0: break
+        elif exitcode=="GAME":
+            exitcode = gameLoop()
+            if exitcode==0: break
+pygame.quit()
+sys.exit(0)

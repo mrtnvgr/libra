@@ -68,6 +68,20 @@
                 "color": [255,255,255]
             }
         },
+		"mainMenu": {
+			"title": {
+				"color": [255,255,255]
+			},
+			"options": {
+				"color": [255,255,255]
+			},
+			"optionsLine": {
+				"color": [255,255,255]
+			},
+			"version": {
+				"color": [255,255,255]
+			}
+		},
         "title": {
             "color": [255,255,255]
         },
@@ -79,7 +93,10 @@
         },
         "ranking": {
             "color": [255,255,255]
-        }
+        },
+		"aboutText": {
+			"color": [255,255,255]
+		}
 	},
     "backgrounds": {
         "userBackgrounds": {
