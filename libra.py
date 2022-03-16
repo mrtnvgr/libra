@@ -7,7 +7,7 @@ from random import randint
 
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0315-3"
+version = "2022.0316"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -185,14 +185,16 @@ fontMMTitle = pygame.font.SysFont('Arial', 80, bold=True)
 
 # check updates
 if config["autoUpdate"].lower()=="true":
+    screen.blit(fontBold.render(title, True, tuple(config["interface"]["title"]["color"])), (0,0))
+    screen.blit(fontBold.render("Checking for an update...", True, tuple(config["interface"]["title"]["color"])), (0,20))
+    pygame.display.flip()
     try:
         remote_version = requests.get(GIT_API_URL).json()["name"]
     except:
         print("No internet connection!")
         remote_version = version
-    if remote_version!=version:
-        screen.blit(fontBold.render(title, True, tuple(config["interface"]["title"]["color"])), (0,0))
-        screen.blit(fontBold.render("Updating...", True, tuple(config["interface"]["updateText"]["color"])), (0,20))
+    if remote_version!=version: 
+        screen.blit(fontBold.render("Updating...", True, tuple(config["interface"]["updateText"]["color"])), (0,40))
         pygame.display.flip()
         if os.name=="nt":
             os_prefix = ".exe"
@@ -226,7 +228,7 @@ def parseMap(map, config):
                 noteRow = int((int(splitted[0])*4)/512)
                 if config["mods"]["mirror"].lower()=="true": noteRow = abs(noteRow-3)
                 try:
-                    if int(splitted[5].split(":")[0])<2:
+                    if int(splitted[5].split(":")[0])<10:
                         converted.append([int(splitted[2]), noteRow])
                     else:
                         converted.append([int(splitted[2]), noteRow, int(splitted[5].split(":")[0]), False, 0])
@@ -467,6 +469,7 @@ def gameLoop():
                     newMaps = importMaps()
                     maps = reloadMaps()
                     if newMaps!=[]:
+                        selectedMapIndex = 0
                         for newMap in newMaps:
                             if newMap in maps:
                                 maps.remove(newMap)
