@@ -5,9 +5,11 @@ import pygame, math, os, sys, requests, shutil, datetime, json, zipfile, colorsy
 from natsort import natsorted, IGNORECASE
 from random import randint
 
+GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
-version = "2022.0316-1"
+
+version = "2022.0317"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -106,10 +108,7 @@ DEFAULT_CONFIG = """{
         },
         "ranking": {
             "color": [255,255,255]
-        },
-		"aboutText": {
-			"color": [255,255,255]
-		}
+        }
 	},
     "backgrounds": {
         "userBackgrounds": {
@@ -283,9 +282,8 @@ def importMaps():
                 os.remove(os.path.join('maps/', dir))
     return newMaps
 
-def mmLoop():
-    mmIndex = 0
-    mmElements = ["Singleplayer", "About", "Exit"]
+def mmLoop(mmIndex):
+    mmElements = ["Singleplayer", "Github", "Exit"]
     while(1):
         clock.tick(config["fps"])
         screen.fill(BLACK)
@@ -296,16 +294,16 @@ def mmLoop():
                 elif event.key==pygame.K_DOWN and mmIndex<len(mmElements)-1:
                     mmIndex += 1
                 elif event.key==eval(f"pygame.K_{config['keybinds']['back']}"):
-                    return 0
+                    return 0, mmIndex
                 elif event.key==pygame.K_RETURN:
                     if mmIndex==0:
-                        return "GAME"
+                        return "GAME", mmIndex
                     elif mmIndex==1:
-                        return "ABOUT"
+                        return "GITHUB", mmIndex
                     elif mmIndex==2:
-                        return "EXIT"
+                        return "EXIT", mmIndex
             elif event.type==pygame.QUIT:
-                return 0
+                return 0, mmIndex
         text = fontMMTitle.render("L18RA", True, tuple(config["interface"]["mainMenu"]["title"]["color"]))
         text_rect = text.get_rect(center=(config["resolution"][0]/2, 100))
         screen.blit(text, text_rect)
@@ -316,22 +314,6 @@ def mmLoop():
                 pygame.draw.rect(screen, tuple(config["interface"]["mainMenu"]["optionsLine"]["color"]), pygame.Rect(0, position, 15, 29))
             position += 30
         screen.blit(fontBold.render("Build: " + version, True, tuple(config["interface"]["mainMenu"]["version"]["color"])), (0,config["resolution"][1]-50))
-        pygame.display.flip()
-
-def aboutLoop():
-    while(1):
-        clock.tick(config["fps"])
-        screen.fill(BLACK)
-        for event in pygame.event.get():
-            if event.type==pygame.KEYDOWN:
-                if event.key==eval(f"pygame.K_{config['keybinds']['back']}") or event.key==pygame.K_RETURN:
-                    return
-            elif event.type==pygame.QUIT:
-                return 0
-        abouttext = """
-L18RA(Libra) - customizable VSRG client"""
-        for i, l in enumerate(abouttext.splitlines()):
-                    screen.blit(fontBold.render(l, True, tuple(config["interface"]["aboutText"]["color"])), (0, 25*i))
         pygame.display.flip()
 
 def gameLoop():
@@ -358,6 +340,7 @@ def gameLoop():
     hit = ""
     searchtext = ""
     rgbHue = 0
+    previousRandomMapIndex = []
     try:
         os.listdir('maps/')
     except FileNotFoundError:
@@ -477,10 +460,12 @@ def gameLoop():
                     oldmaps = maps
                     config = configReload()
                 elif event.key==eval(f"pygame.K_{config['keybinds']['randomMap']}") and not isPlaying:
-                    if pygame.key.get_mods() & pygame.KMOD_SHIFT and previousRandomMapIndex!=None:
-                        selectedMapIndex = previousRandomMapIndex
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT: 
+                        if previousRandomMapIndex!=[]:
+                            selectedMapIndex = previousRandomMapIndex[-1]
+                            previousRandomMapIndex.pop(-1)
                     else:
-                        previousRandomMapIndex = selectedMapIndex
+                        previousRandomMapIndex.append(selectedMapIndex)
                         selectedMapIndex = randint(0, len(maps))
                 elif event.key == pygame.K_RETURN and not isPlaying:
                     if maps==[]: continue 
@@ -797,13 +782,21 @@ Score: {padding(curScore, 8)}"""
 
         pygame.display.flip()
 
+loc = 0
 while(1):
     if __name__ == "__main__":
-        exitcode = mmLoop()
+        exitcode, loc = mmLoop(loc)
         if exitcode==0 or exitcode=="EXIT": break
-        elif exitcode=="ABOUT":
-            exitcode = aboutLoop()
-            if exitcode==0: break
+        elif exitcode=="GITHUB":
+            if sys.platform=='win32':
+                os.startfile(GIT_URL)
+            elif sys.platform == 'darwin':
+                os.system("open " + GIT_URL)
+            else:
+                try:
+                    os.system('xdg-open ' + GIT_URL)
+                except OSError:
+                    print('Please open a browser on: ' + GIT_URL)
         elif exitcode=="GAME":
             exitcode = gameLoop()
             if exitcode==0: break

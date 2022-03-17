@@ -95,10 +95,7 @@
         },
         "ranking": {
             "color": [255,255,255]
-        },
-		"aboutText": {
-			"color": [255,255,255]
-		}
+        }
 	},
     "backgrounds": {
         "userBackgrounds": {
