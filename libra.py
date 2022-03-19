@@ -1,7 +1,7 @@
 #!/bin/python3
 from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-import pygame, math, os, sys, requests, shutil, datetime, json, zipfile, colorsys
+import pygame, math, os, sys, requests, shutil, datetime, json, zipfile, colorsys, itertools
 from natsort import natsorted, IGNORECASE
 from random import randint
 
@@ -9,7 +9,7 @@ GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
 
-version = "2022.0317"
+version = "2022.0319"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -18,10 +18,12 @@ DEFAULT_CONFIG = """{
         "notes": ["q","w","LEFTBRACKET", "RIGHTBRACKET"],
         "back": "ESCAPE",
         "randomMap": "F2",
+        "deleteMap": "DELETE",
         "reload": "F3",
         "toggleMapBackground": "F4",
         "toggleUserGameplayBackground": "F4",
-        "toggleUserMapSelectionBackground": "F4"
+        "toggleUserMapSelectionBackground": "F4",
+        "toggleNoteTypes": "F5"
     },
 	"note": {
 		"type": "bar",
@@ -29,7 +31,7 @@ DEFAULT_CONFIG = """{
 		"size": 0.95
 	},
     "audioOffset": 0,
-    "fps": 500,
+    "fps": 144,
     "mods": {
         "suddenDeath": "false",
         "hardrock": "false",
@@ -285,7 +287,7 @@ def importMaps():
 def mmLoop(mmIndex):
     mmElements = ["Singleplayer", "Github", "Exit"]
     while(1):
-        clock.tick(config["fps"])
+        clock.tick(config["fps"])/1000
         screen.fill(BLACK)
         for event in pygame.event.get():
             if event.type==pygame.KEYDOWN:
@@ -365,6 +367,7 @@ def gameLoop():
             rgbColorsStates.append(True)
         else:
             rgbColorsStates.append(False)
+    noteTypesToggle = itertools.cycle(['bar', 'circle'])
     while(1):
         clock.tick(config["fps"])
         screen.fill(BLACK)
@@ -397,7 +400,7 @@ def gameLoop():
         elif selectedMapIndex==len(maps):
             selectedMapIndex = 0
         if selectingMaps!="" and not isPlaying:
-            if selectingMapsCooldown==(config["fps"]//12):
+            if selectingMapsCooldown==50:
                 if selectingMaps=="down":
                     selectedMapIndex += 1
                 elif selectingMaps=="up":
@@ -433,21 +436,23 @@ def gameLoop():
                     config["backgrounds"]["userBackgrounds"]["gameplay"]["state"] = 'true' if config["backgrounds"]["userBackgrounds"]["gameplay"]["state"] == 'false' else 'false'
                 elif event.key==eval(f"pygame.K_{config['keybinds']['toggleUserMapSelectionBackground']}"):
                     config["backgrounds"]["userBackgrounds"]["mapSelection"]["state"] = 'true' if config["backgrounds"]["userBackgrounds"]["mapSelection"]["state"] == 'false' else 'false'
+                if event.key==eval(f"pygame.K_{config['keybinds']['toggleNoteTypes']}"): config["note"]["type"] = next(noteTypesToggle)
                 if event.key == pygame.K_DOWN and not isPlaying:
                     selectedMapIndex += 1
                     selectingMaps = "down"
                 elif event.key == pygame.K_UP and not isPlaying:
                     selectedMapIndex -= 1
                     selectingMaps = "up"
-                elif event.key==pygame.K_DELETE and not isPlaying:
+                elif event.key==eval(f"pygame.K_{config['keybinds']['deleteMap']}") and not isPlaying:
                     shutil.rmtree("maps/"+maps[selectedMapIndex], ignore_errors=True)
-                    maps = reloadMaps()
+                    loadedmaps = reloadMaps()
                     if newMaps!=[]:
                         for newMap in newMaps:
-                            if newMap in maps:
-                                maps.remove(newMap)
-                                maps = [newMap] + maps # новые песни в начало списка
-                    oldmaps = maps
+                            if newMap in loadedmaps:
+                                mapsloaded.remove(newMap)
+                                mapsloaded = [newMap] + mapsloaded # новые песни в начало списка
+                    oldmaps = loadedmaps
+                    maps.pop(maps.index(maps[selectedMapIndex]))
                 elif event.key==eval(f"pygame.K_{config['keybinds']['reload']}") and not isPlaying:
                     newMaps = importMaps()
                     maps = reloadMaps()

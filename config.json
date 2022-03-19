@@ -5,10 +5,12 @@
         "notes": ["q","w","LEFTBRACKET", "RIGHTBRACKET"],
         "back": "ESCAPE",
         "randomMap": "F2",
+        "deleteMap": "DELETE",
         "reload": "F3",
         "toggleMapBackground": "F4",
         "toggleUserGameplayBackground": "F4",
-        "toggleUserMapSelectionBackground": "F4"
+        "toggleUserMapSelectionBackground": "F4",
+        "toggleNoteTypes": "F5"
     },
 	"note": {
 		"type": "bar",
@@ -16,7 +18,7 @@
 		"size": 0.95
 	},
     "audioOffset": 0,
-    "fps": 500,
+    "fps": 144,
     "mods": {
         "suddenDeath": "false",
         "hardrock": "false",
