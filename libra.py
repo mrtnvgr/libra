@@ -9,7 +9,7 @@ GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
 
-version = "2022.0319"
+version = "2022.0327"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -583,6 +583,7 @@ Score: {padding(curScore, 8)}"""
                     if event.type==pygame.QUIT:
                         return 0
                     elif (event.type==pygame.KEYDOWN and event.key==eval(f"pygame.K_{config['keybinds']['back']}")):
+                        pygame.mixer.music.stop()
                         return
                     elif event.type==pygame.KEYDOWN and event.key==pygame.K_RETURN: break
                 loadedObjects = []
