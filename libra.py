@@ -9,7 +9,7 @@ GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
 
-version = "2022.0327"
+version = "2022.0403"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -449,8 +449,8 @@ def gameLoop():
                     if newMaps!=[]:
                         for newMap in newMaps:
                             if newMap in loadedmaps:
-                                mapsloaded.remove(newMap)
-                                mapsloaded = [newMap] + mapsloaded # новые песни в начало списка
+                                loadedmaps.remove(newMap)
+                                loadedmaps = [newMap] + loadedmaps # новые песни в начало списка
                     oldmaps = loadedmaps
                     maps.pop(maps.index(maps[selectedMapIndex]))
                 elif event.key==eval(f"pygame.K_{config['keybinds']['reload']}") and not isPlaying:
