@@ -9,7 +9,7 @@ GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
 
-version = "2022.0403"
+version = "2022.0404"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -37,7 +37,8 @@ DEFAULT_CONFIG = """{
         "hardrock": "false",
         "mirror": "false"
     },
-    "saveScores": "true",
+    "saveScores": "false",
+    "saveOnlyFCScores": "false",
 	"interface": {
 		"gameplay": {
 			"songName": {
@@ -567,7 +568,7 @@ Miss: {hitCount['miss']}
 Accuracy: {accuracy}
 Combo: {maxCombo}
 Score: {padding(curScore, 8)}"""
-                if config["saveScores"].lower()=="true":
+                if config["saveScores"].lower()=="true" or (config["saveOnlyFCScores"].lower()=="true" and hitCount["miss"]):
                     try:
                         os.listdir('scores')
                     except FileNotFoundError:

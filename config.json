@@ -24,7 +24,8 @@
         "hardrock": "false",
         "mirror": "false"
     },
-    "saveScores": "true",
+    "saveScores": "false",
+    "saveOnlyFCScores": "false",
 	"interface": {
 		"gameplay": {
 			"songName": {
