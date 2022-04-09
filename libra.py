@@ -9,7 +9,7 @@ GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
 
-version = "2022.0404"
+version = "2022.0409"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -409,10 +409,6 @@ def gameLoop():
             else:
                 selectingMapsCooldown += 1
         
-        if config["mods"]["suddenDeath"].lower()=="true" and hitCount["miss"]>0:
-            isPlaying = False
-            pygame.mixer.music.stop()
-
         # rgb logic
         if rgbHue==360: rgbHue = 0
         rgbHue += config["rgb"]["speed"]
@@ -550,7 +546,7 @@ def gameLoop():
                         pygame.draw.rect(screen, config["colors"][i], pygame.Rect(config["resolution"][0]/2-286*config["note"]["size"] + i * int(140*config["note"]["size"]), config["resolution"][1]-101, int(120*config["note"]["size"]),50))
 
         if isPlaying and playingFrame + 1000 < pygame.time.get_ticks():
-            if len(loadedObjects) == 0:
+            if (len(loadedObjects)==0) or (config["mods"]["suddenDeath"].lower()=="true" and hitCount["miss"]>0):
                 isPlaying = False
                 mods = []
                 for i in config["mods"]:
@@ -568,7 +564,10 @@ Miss: {hitCount['miss']}
 Accuracy: {accuracy}
 Combo: {maxCombo}
 Score: {padding(curScore, 8)}"""
-                if config["saveScores"].lower()=="true" or (config["saveOnlyFCScores"].lower()=="true" and hitCount["miss"]):
+                if config["mods"]["suddenDeath"].lower()=="true" and hitCount["miss"]>0:
+                    data = data + "\nFAIL"
+                    pygame.mixer.music.stop()
+                elif config["saveScores"].lower()=="true" or (config["saveOnlyFCScores"].lower()=="true" and hitCount["miss"]):
                     try:
                         os.listdir('scores')
                     except FileNotFoundError:
