@@ -9,7 +9,7 @@ GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
 
-version = "2022.0409"
+version = "2022.0410"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -287,6 +287,7 @@ def importMaps():
 
 def mmLoop(mmIndex):
     mmElements = ["Singleplayer", "Github", "Exit"]
+    text_rotate_degrees = 0
     while(1):
         clock.tick(config["fps"])/1000
         screen.fill(BLACK)
@@ -308,7 +309,9 @@ def mmLoop(mmIndex):
             elif event.type==pygame.QUIT:
                 return 0, mmIndex
         text = fontMMTitle.render("L18RA", True, tuple(config["interface"]["mainMenu"]["title"]["color"]))
-        text_rect = text.get_rect(center=(config["resolution"][0]/2, 100))
+        text_rotate_degrees += 1
+        text = pygame.transform.rotate(text, text_rotate_degrees)
+        text_rect = text.get_rect(center=(config["resolution"][0]/2, 150))
         screen.blit(text, text_rect)
         position = 300
         for i in range(len(mmElements)):
