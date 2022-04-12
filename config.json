@@ -19,6 +19,7 @@
 	},
     "audioOffset": 0,
     "fps": 144,
+    "ghostTapping": "false",
     "mods": {
         "suddenDeath": "false",
         "hardrock": "false",
