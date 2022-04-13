@@ -9,7 +9,7 @@ GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
 
-version = "2022.0411"
+version = "2022.0413"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -324,7 +324,6 @@ def mmLoop(mmIndex):
         pygame.display.flip()
 
 def gameLoop():
-    loadedMap = []
     loadedObjects = []
     selectedMapIndex = 0
     oldIndex = 0
@@ -376,7 +375,7 @@ def gameLoop():
     while(1):
         clock.tick(config["fps"])
         screen.fill(BLACK)
-        if not isPlaying and loadedObjects!=[]:
+        if not isPlaying:
             loadedObjects = []
             keysDown = [False, False, False, False]
             keysPressed = [False, False, False, False]
@@ -484,11 +483,15 @@ def gameLoop():
                         pygame.mixer.music.load("maps/"+maps[selectedMapIndex]+"/"+songfile)
                     except pygame.error:
                         continue
-                    pygame.mixer.music.play()
- 
+                    
                     loadedFile = parseMap(maps[selectedMapIndex], config)
                     if loadedFile[0]==[]: continue
                     loadedMap = loadedFile[0]
+                    pygame.mixer.music.play()
+                    offset = config["audioOffset"]
+                    if loadedMap[0][0]<2000:
+                        pygame.mixer.music.pause()
+                        offset += 2000
                     background = loadedFile[1]
                     if background!="":
                         backgroundBg = pygame.transform.scale(pygame.image.load("maps/"+maps[selectedMapIndex]+"/"+background).convert(), tuple(config["resolution"]))
@@ -596,47 +599,49 @@ Score: {padding(curScore, 8)}"""
                 for i in range(len(keysPressed)):
                     if keysPressed[i] or keysReleased[i]:
                         if obj[1] == i:
-                            if obj[0] - (pygame.time.get_ticks() - playingFrame) < 500:
+                            if obj[0] - (pygame.time.get_ticks() - offset - playingFrame) < 500:
                                 loadedLaneObjects[i].append(obj)
                                 break
                 if len(obj) == 5:
                     if config["note"]["type"]=="circle":
                         if not obj[3]:
-                            pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-220*config["note"]["size"] + obj[1] * int(140*config["note"]["size"]),config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - playingFrame)) * config["note"]["speed"]), int(60*config["note"]["size"]) )
-                        pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-220*config["note"]["size"] + obj[1] * int(140*config["note"]["size"]),config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - playingFrame)) * config["note"]["speed"]), int(60*config["note"]["size"]) )
+                            pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-220*config["note"]["size"] + obj[1] * int(140*config["note"]["size"]),config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - offset - playingFrame)) * config["note"]["speed"]), int(60*config["note"]["size"]) )
+                        pygame.draw.circle(screen, config["colors"][obj[1]], ((config["resolution"][0]/2)-220*config["note"]["size"] + obj[1] * int(140*config["note"]["size"]),config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - offset - playingFrame)) * config["note"]["speed"]), int(60*config["note"]["size"]) )
                     elif config["note"]["type"]=="bar":
                         if not obj[3]:
-                            pygame.draw.rect(screen, config["colors"][obj[1]], pygame.Rect(config["resolution"][0]/2-286*config["note"]["size"] + obj[1] * int(140*config["note"]["size"]), config["resolution"][1]-101 - (obj[0] - (pygame.time.get_ticks() - playingFrame)) * config["note"]["speed"], int(120*config["note"]["size"]),50))
-                        pygame.draw.rect(screen, config["colors"][obj[1]], pygame.Rect(config["resolution"][0]/2-286*config["note"]["size"] + obj[1] * int(140*config["note"]["size"]), config["resolution"][1]-101 - (obj[2] - (pygame.time.get_ticks() - playingFrame)) * config["note"]["speed"], int(120*config["note"]["size"]),50))
+                            pygame.draw.rect(screen, config["colors"][obj[1]], pygame.Rect(config["resolution"][0]/2-286*config["note"]["size"] + obj[1] * int(140*config["note"]["size"]), config["resolution"][1]-101 - (obj[0] - (pygame.time.get_ticks() - offset - playingFrame)) * config["note"]["speed"], int(120*config["note"]["size"]),50))
+                        pygame.draw.rect(screen, config["colors"][obj[1]], pygame.Rect(config["resolution"][0]/2-286*config["note"]["size"] + obj[1] * int(140*config["note"]["size"]), config["resolution"][1]-101 - (obj[2] - (pygame.time.get_ticks() - offset - playingFrame)) * config["note"]["speed"], int(120*config["note"]["size"]),50))
 
                     if config["note"]["type"]=="circle":
                         rect1 = (config["resolution"][0]/2)-280*config["note"]["size"] + obj[1] * int(140*config["note"]["size"])
                     elif config["note"]["type"]=="bar":
                         rect1 = config["resolution"][0]/2-286*config["note"]["size"] + obj[1] * int(140*config["note"]["size"])
-                    rect2 = config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - playingFrame)) * config["note"]["speed"]
+                    rect2 = config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - offset - playingFrame)) * config["note"]["speed"]
                     rect3 = (120*config["note"]["size"])
                     if not obj[3]:
-                        rect4 = (config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - playingFrame)) * config["note"]["speed"]) - rect2
+                        rect4 = (config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - offset - playingFrame)) * config["note"]["speed"]) - rect2
                     else:
-                        rect4 = (obj[2] - (pygame.time.get_ticks() - playingFrame)) * config["note"]["speed"]
+                        rect4 = (obj[2] - (pygame.time.get_ticks() - offset - playingFrame)) * config["note"]["speed"]
                     pygame.draw.rect(screen, config["colors"][obj[1]], pygame.Rect(rect1, rect2, rect3, rect4))
                     
-                    if config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - playingFrame)) * config["note"]["speed"] > config["resolution"][0]-300:
+                    if config["resolution"][1]-100 - (obj[2] - (pygame.time.get_ticks() - offset - playingFrame)) * config["note"]["speed"] > config["resolution"][0]-300:
                         hit = "miss"
                         hitCount[hit] += 1
+                        combo = 0
                         unloadedObjects.remove(obj)
                         if len(loadedMap) != 0:
                             unloadedObjects.append(loadedMap.pop(0))
                 else:
                     if config["note"]["type"]=="circle":
-                        pygame.draw.circle(screen, tuple(config["colors"][obj[1]]), ((config["resolution"][0]/2)-220*config["note"]["size"] + obj[1] * int(140*config["note"]["size"]), config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - playingFrame)) * config["note"]["speed"]), int(60*config["note"]["size"]) )
+                        pygame.draw.circle(screen, tuple(config["colors"][obj[1]]), ((config["resolution"][0]/2)-220*config["note"]["size"] + obj[1] * int(140*config["note"]["size"]), config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - offset - playingFrame)) * config["note"]["speed"]), int(60*config["note"]["size"]) )
                     elif config["note"]["type"]=="bar":
-                        pygame.draw.rect(screen, tuple(config["colors"][obj[1]]), pygame.Rect(config["resolution"][0]/2-286*config["note"]["size"] + obj[1] * int(140*config["note"]["size"]), config["resolution"][1]-101 - (obj[0] - (pygame.time.get_ticks() - playingFrame)) * config["note"]["speed"], int(120*config["note"]["size"]),50))
+                        pygame.draw.rect(screen, tuple(config["colors"][obj[1]]), pygame.Rect(config["resolution"][0]/2-286*config["note"]["size"] + obj[1] * int(140*config["note"]["size"]), config["resolution"][1]-101 - (obj[0] - (pygame.time.get_ticks() - offset - playingFrame)) * config["note"]["speed"], int(120*config["note"]["size"]),50))
 
 
-                    if config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - playingFrame)) * config["note"]["speed"] > config["resolution"][0]-300:
+                    if config["resolution"][1]-100 - (obj[0] - (pygame.time.get_ticks() - offset - playingFrame)) * config["note"]["speed"] > config["resolution"][0]-300:
                         hit = "miss"
                         hitCount[hit] += 1
+                        combo = 0
                         unloadedObjects.remove(obj)
                         if len(loadedMap) != 0:
                             unloadedObjects.append(loadedMap.pop(0))
@@ -645,7 +650,7 @@ Score: {padding(curScore, 8)}"""
                 if keysPressed[i]:
                     if len(loadedLaneObjects[i]) != 0:
                         obj = loadedLaneObjects[i][0]
-                        hitDifference = abs(obj[0] - (pygame.time.get_ticks() - playingFrame))
+                        hitDifference = abs(obj[0] - (pygame.time.get_ticks() - offset - playingFrame))
                         dont = False
                         if len(obj) == 5:
                             try:
@@ -661,7 +666,7 @@ Score: {padding(curScore, 8)}"""
                                     dont = True
                             else:
                                 unObj[3] = True
-                                unObj[4] = abs(obj[0] - (pygame.time.get_ticks() - playingFrame))
+                                unObj[4] = abs(obj[0] - (pygame.time.get_ticks() - offset - playingFrame))
                                 dont = True
                         else:
                             if hitDifference > config["hitwindow"][0]:
@@ -695,7 +700,7 @@ Score: {padding(curScore, 8)}"""
                     if len(loadedLaneObjects[i]) != 0:
                         obj = loadedLaneObjects[i][0]
                         if len(obj) == 5 and obj[3]:
-                            hitDifference = max(obj[4], abs(obj[2] - (pygame.time.get_ticks() - playingFrame)))
+                            hitDifference = max(obj[4], abs(obj[2] - (pygame.time.get_ticks() - offset - playingFrame)))
                             if hitDifference > config["hitwindow"][0]:
                                 if config["ghostTapping"].lower()!="true":
                                     hit = "miss"
@@ -735,6 +740,8 @@ Score: {padding(curScore, 8)}"""
                 screen.blit(fontBold.render(hit, True, hitColor), ((config["resolution"][0]/2) - hitWidth / 2, config["resolution"][1]-280))
             loadedObjects = unloadedObjects
         
+        if isPlaying and offset!=config["audioOffset"] and playingFrame + offset < pygame.time.get_ticks(): pygame.mixer.music.unpause()
+
         if maxCombo<combo: maxCombo = combo
 
         if isPlaying==True:
