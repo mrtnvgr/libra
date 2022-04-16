@@ -9,7 +9,7 @@ GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
 
-version = "2022.0413"
+version = "2022.0416"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -573,7 +573,7 @@ Score: {padding(curScore, 8)}"""
                 if config["mods"]["suddenDeath"].lower()=="true" and hitCount["miss"]>0:
                     data = data + "\nFAIL"
                     pygame.mixer.music.stop()
-                elif config["saveScores"].lower()=="true" or (config["saveOnlyFCScores"].lower()=="true" and hitCount["miss"]):
+                elif config["saveScores"].lower()=="true" or (config["saveOnlyFCScores"].lower()=="true" and hitCount["miss"]==0):
                     try:
                         os.listdir('scores')
                     except FileNotFoundError:
