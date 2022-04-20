@@ -9,7 +9,7 @@ GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
 
-version = "2022.0420"
+version = "2022.0420-1"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -27,8 +27,8 @@ DEFAULT_CONFIG = """{
     },
 	"note": {
 		"type": "bar",
-		"speed": 1.9,
-		"size": 0.95
+		"speed": 2.1,
+		"size": 0.90
 	},
     "audioOffset": 0,
     "fps": 144,
@@ -39,7 +39,7 @@ DEFAULT_CONFIG = """{
         "mirror": "false"
     },
     "saveScores": "false",
-    "saveOnlyFCScores": "false",
+    "saveOnlyFCScores": "true",
 	"interface": {
 		"gameplay": {
 			"songName": {
@@ -147,10 +147,10 @@ DEFAULT_CONFIG = """{
         [0,167,171]
     ],
     "colors": [
-        [171,171,171],
-        "rgb",
-		"rgb",
-        [171,171,171]
+        [255,255,255],
+		[255,255,255],
+		[255,255,255],
+        [255,255,255]
     ],
     "autoUpdate": "true"
 }"""
@@ -348,9 +348,9 @@ def gameLoop():
     rgbHue = 0
     previousRandomMapIndex = []
     try:
-        os.listdir('maps/')
-    except FileNotFoundError:
         os.mkdir('maps')
+    except FileExistsError:
+        pass
     newMaps = importMaps()
     maps = reloadMaps()
     if newMaps!=[]:

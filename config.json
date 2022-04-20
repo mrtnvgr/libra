@@ -14,8 +14,8 @@
     },
 	"note": {
 		"type": "bar",
-		"speed": 1.9,
-		"size": 0.95
+		"speed": 2.1,
+		"size": 0.90
 	},
     "audioOffset": 0,
     "fps": 144,
@@ -26,7 +26,7 @@
         "mirror": "false"
     },
     "saveScores": "false",
-    "saveOnlyFCScores": "false",
+    "saveOnlyFCScores": "true",
 	"interface": {
 		"gameplay": {
 			"songName": {
@@ -134,10 +134,10 @@
         [0,167,171]
     ],
     "colors": [
-        [171,171,171],
-        "rgb",
-		"rgb",
-        [171,171,171]
+        [255,255,255],
+		[255,255,255],
+		[255,255,255],
+        [255,255,255]
     ],
     "autoUpdate": "true"
 }
