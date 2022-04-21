@@ -3,13 +3,14 @@ from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame, math, os, sys, requests, shutil, datetime, json, zipfile, colorsys, itertools
 from natsort import natsorted, IGNORECASE
+from pydub import AudioSegment
 from random import randint
 
 GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
 
-version = "2022.0420-1"
+version = "2022.0421"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -23,7 +24,8 @@ DEFAULT_CONFIG = """{
         "toggleMapBackground": "F4",
         "toggleUserGameplayBackground": "F4",
         "toggleUserMapSelectionBackground": "F4",
-        "toggleNoteTypes": "F5"
+        "toggleNoteTypes": "F5",
+		"rateSelectedMap": "F6"
     },
 	"note": {
 		"type": "bar",
@@ -241,6 +243,31 @@ def parseMap(map, config):
                 if mapline=="[HitObjects]":
                     hitObjects = True
     return [converted, background]
+
+def changeNoteSpeed(map, speed):
+    if os.path.exists(map+"/map.osu")==True:
+        mapdata = open(map+"/map.osu", "r", encoding="utf-8").read().split("\n")
+        type = "osu"
+    mapdata = [value for value in mapdata if value]
+    hitObjects = False
+    newmap = open(f"{map}/map.osu", "w", encoding="utf-8")
+    newmaplines = []
+    for mapline in mapdata:
+        if type=="osu":
+            if hitObjects==True:
+                mapline = mapline.split(",")
+                mapline[2] = str(int(int(mapline[2])//speed))
+                if int(mapline[5].split(":")[0])>10:
+                    slider = mapline[5].split(":")
+                    slider[0] = str(int(int(slider[0])//speed))
+                    mapline[5] = ':'.join(slider)
+                mapline = ','.join(mapline)
+            else:
+                if mapline=="[HitObjects]":
+                    hitObjects = True
+        newmaplines.append(mapline+"\n")
+    newmap.writelines(newmaplines)
+    newmap.close()
 
 def reloadMaps():
     files = os.listdir('maps/')
@@ -464,6 +491,11 @@ def gameLoop():
                                 maps.remove(newMap)
                                 maps = [newMap] + maps # новые песни в начало списка
                     oldmaps = maps
+                    searchmaps = []
+                    if searchtext!="":
+                        for i in maps:
+                            if searchtext.lower() in i.lower(): searchmaps.append(i)
+                    maps = searchmaps
                     config = configReload()
                 elif event.key==eval(f"pygame.K_{config['keybinds']['randomMap']}") and not isPlaying:
                     if pygame.key.get_mods() & pygame.KMOD_SHIFT: 
@@ -473,6 +505,34 @@ def gameLoop():
                     else:
                         previousRandomMapIndex.append(selectedMapIndex)
                         selectedMapIndex = randint(0, len(maps))
+                elif event.key==eval(f"pygame.K_{config['keybinds']['rateSelectedMap']}") and not isPlaying: # map rater
+                    src = f'maps/{maps[selectedMapIndex]}'
+                    for speed in [round(x * 0.1,2) for x in range(5, 21) if x!=10]:
+                        dst = f'maps/{maps[selectedMapIndex]} [{speed}]'
+                        mp3file = [f for f in os.listdir(src) if f[-4:]==".mp3"][0]
+                        shutil.copytree(src, dst)
+                        sound = AudioSegment.from_file(os.path.abspath(f'{dst}/{mp3file}'))
+                        sound_with_altered_frame_rate = sound._spawn(sound.raw_data, overrides={
+                            "frame_rate": int(sound.frame_rate * speed)
+                        })
+                        newSound = sound_with_altered_frame_rate.set_frame_rate(sound.frame_rate)
+                        newSound.export(os.path.abspath(f'{dst}/{mp3file}'))
+                        changeNoteSpeed(dst, speed) 
+                    maps = reloadMaps()
+                    if newMaps!=[]:
+                        selectedMapIndex = 0
+                        for newMap in newMaps:
+                            if newMap in maps:
+                                maps.remove(newMap)
+                                maps = [newMap] + maps # новые песни в начало списка
+                    oldmaps = maps
+                    searchmaps = []
+                    if searchtext!="":
+                        for i in maps:
+                            if searchtext.lower() in i.lower(): searchmaps.append(i)
+                        maps = searchmaps
+
+
                 elif event.key == pygame.K_RETURN and not isPlaying:
                     if maps==[]: continue 
                     if os.path.exists("maps/"+maps[selectedMapIndex]+"/map.osu"):

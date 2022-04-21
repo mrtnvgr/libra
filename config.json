@@ -10,7 +10,8 @@
         "toggleMapBackground": "F4",
         "toggleUserGameplayBackground": "F4",
         "toggleUserMapSelectionBackground": "F4",
-        "toggleNoteTypes": "F5"
+        "toggleNoteTypes": "F5",
+		"rateSelectedMap": "F6"
     },
 	"note": {
 		"type": "bar",
