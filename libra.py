@@ -5,6 +5,7 @@ import pygame, math, os, sys, requests, shutil, datetime, json, zipfile, colorsy
 from natsort import natsorted, IGNORECASE
 from pydub import AudioSegment
 from random import randint
+import collections.abc
 
 GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
@@ -156,6 +157,15 @@ DEFAULT_CONFIG = """{
     ],
     "autoUpdate": "true"
 }"""
+
+def update(d, u):
+    for k, v in u.items():
+        if isinstance(v, collections.abc.Mapping):
+            d[k] = update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
+
 def configReload():
     while(1):
         try:
@@ -168,11 +178,7 @@ def configReload():
     if config["mods"]["hardrock"].lower()=="true":
         for i in range(len(config["hitwindow"])): config["hitwindow"][i] = config["hitwindow"][i]//1.5
     default_config = json.loads(DEFAULT_CONFIG)
-    if set(default_config)==set(config):
-        return config
-    else:
-        print("Current config is missing some parameters!")
-        return {**default_config, **config}
+    return update(default_config, config)
 config = configReload()
 
 pygame.display.set_caption(title)
