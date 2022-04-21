@@ -10,7 +10,7 @@ GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
 
-version = "2022.0421"
+version = "2022.0421-1"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -162,12 +162,17 @@ def configReload():
             config = json.load(open("config.json"))
             break
         except FileNotFoundError:
-            print("Config does not exist. Writing default")
+            print("Config does not exist")
             open("config.json", "w").write(DEFAULT_CONFIG)
             continue
     if config["mods"]["hardrock"].lower()=="true":
         for i in range(len(config["hitwindow"])): config["hitwindow"][i] = config["hitwindow"][i]//1.5
-    return config
+    default_config = json.loads(DEFAULT_CONFIG)
+    if set(default_config)==set(config):
+        return config
+    else:
+        print("Current config is missing some parameters!")
+        return {**default_config, **config}
 config = configReload()
 
 pygame.display.set_caption(title)
