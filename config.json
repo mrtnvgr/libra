@@ -98,6 +98,9 @@
         "mapParsing": {
             "color": [255,255,255]
         },
+		"mapRating": {
+			"color": [255,255,255]
+		},
         "ranking": {
             "color": [255,255,255]
         }

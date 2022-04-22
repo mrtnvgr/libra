@@ -11,7 +11,7 @@ GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
 
-version = "2022.0421-1"
+version = "2022.0422"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -113,6 +113,9 @@ DEFAULT_CONFIG = """{
         "mapParsing": {
             "color": [255,255,255]
         },
+		"mapRating": {
+			"color": [255,255,255]
+		},
         "ranking": {
             "color": [255,255,255]
         }
@@ -289,7 +292,21 @@ def reloadMaps():
     return natsorted(maps, alg=IGNORECASE)
 
 def importMaps():
-    files = os.listdir('maps/')
+    if os.path.exists("Songs"):
+        osufolders = os.listdir("Songs")
+        if osufolders!=[]:
+            screen.fill(BLACK)
+            screen.blit(fontBold.render(title, True, tuple(config["interface"]["title"]["color"])), (0,0))
+            screen.blit(fontBold.render("Converting...", True, tuple(config["interface"]["mapParsing"]["color"])), (0,20))
+            pygame.display.flip()
+            for osufolder in osufolders:
+                additional_files = [f for f in os.listdir(f"Songs/{osufolder}") if f[-4:]!=".osu"]
+                for osumap in [f for f in os.listdir(f"Songs/{osufolder}") if f[-4:]==".osu"]:
+                    os.mkdir(f"maps/{osumap[:-4]}")
+                    shutil.copy(f"Songs/{osufolder}/{osumap}", f"maps/{osumap[:-4]}/map.osu")
+                    for i in additional_files: shutil.copy(f"Songs/{osufolder}/{i}", f"maps/{osumap[:-4]}/{i}")
+                shutil.rmtree(f"Songs/{osufolder}")
+    files = os.listdir('maps')
     newMaps = []
     for dir in files:
             if ".osz" in dir:
@@ -483,7 +500,8 @@ def gameLoop():
                     selectedMapIndex -= 1
                     selectingMaps = "up"
                 elif event.key==eval(f"pygame.K_{config['keybinds']['deleteMap']}") and not isPlaying:
-                    shutil.rmtree("maps/"+maps[selectedMapIndex], ignore_errors=True)
+                    if maps!=[]:
+                        shutil.rmtree("maps/"+maps[selectedMapIndex], ignore_errors=True)
                     loadedmaps = reloadMaps()
                     if newMaps!=[]:
                         for newMap in newMaps:
@@ -506,7 +524,7 @@ def gameLoop():
                     if searchtext!="":
                         for i in maps:
                             if searchtext.lower() in i.lower(): searchmaps.append(i)
-                    maps = searchmaps
+                        maps = searchmaps
                     config = configReload()
                 elif event.key==eval(f"pygame.K_{config['keybinds']['randomMap']}") and not isPlaying:
                     if pygame.key.get_mods() & pygame.KMOD_SHIFT: 
@@ -518,6 +536,10 @@ def gameLoop():
                         selectedMapIndex = randint(0, len(maps))
                 elif event.key==eval(f"pygame.K_{config['keybinds']['rateSelectedMap']}") and not isPlaying: # map rater
                     src = f'maps/{maps[selectedMapIndex]}'
+                    screen.fill(BLACK)
+                    screen.blit(fontBold.render(title, True, tuple(config["interface"]["title"]["color"])), (0,0))
+                    screen.blit(fontBold.render("Processing...", True, tuple(config["interface"]["mapRating"]["color"])), (0,20))
+                    pygame.display.flip()
                     for speed in [round(x * 0.1,2) for x in range(5, 21) if x!=10]:
                         dst = f'maps/{maps[selectedMapIndex]} [{speed}]'
                         mp3file = [f for f in os.listdir(src) if f[-4:]==".mp3"][0]
