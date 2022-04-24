@@ -11,7 +11,7 @@ GIT_URL = "https://github.com/mrtnvgr/libra"
 GIT_API_URL = "https://api.github.com/repos/mrtnvgr/libra/releases/latest"
 GIT_RELEASE_URL = "https://github.com/mrtnvgr/libra/releases/latest/download/libra"
 
-version = "2022.0422"
+version = "2022.0424"
 title = "Libra " + version
 DEFAULT_CONFIG = """{
     "resolution": [1920,1080],
@@ -19,6 +19,7 @@ DEFAULT_CONFIG = """{
 	"keybinds": {
         "notes": ["q","w","LEFTBRACKET", "RIGHTBRACKET"],
         "back": "ESCAPE",
+        "retry": "F1",
         "randomMap": "F2",
         "deleteMap": "DELETE",
         "reload": "F3",
@@ -379,26 +380,13 @@ def mmLoop(mmIndex):
         pygame.display.flip()
 
 def gameLoop():
-    loadedObjects = []
     selectedMapIndex = 0
     oldIndex = 0
     selectingMaps = ""
     selectingMapsCooldown = 0
-    keysDown = [False, False, False, False]
-    keysPressed = [False, False, False, False]
-    keysReleased = [False, False, False, False]
     isPlaying = False
     playingFrame = 0
-    combo = 0
-    maxCombo = 0
-    curScore = 0.0
-    hitCount = {
-        'perfect': 0,
-        'good': 0,
-        'bad': 0,
-        'miss': 0
-    }
-    hit = ""
+    startMap = False
     searchtext = ""
     rgbHue = 0
     previousRandomMapIndex = []
@@ -431,6 +419,7 @@ def gameLoop():
         clock.tick(config["fps"])
         screen.fill(BLACK)
         if not isPlaying:
+            if startMap==True: startMap = "T"
             loadedObjects = []
             keysDown = [False, False, False, False]
             keysPressed = [False, False, False, False]
@@ -565,38 +554,12 @@ def gameLoop():
                             if searchtext.lower() in i.lower(): searchmaps.append(i)
                         maps = searchmaps
 
-
-                elif event.key == pygame.K_RETURN and not isPlaying:
-                    if maps==[]: continue 
-                    if os.path.exists("maps/"+maps[selectedMapIndex]+"/map.osu"):
-                        for line in open("maps/"+maps[selectedMapIndex]+"/map.osu", encoding="utf-8").read().split("\n"):
-                            if "AudioFilename" in line:
-                                songfile = line.replace("AudioFilename:", "")
-                                if songfile[0]==" ": songfile = songfile[1:]
-                    try:
-                        pygame.mixer.music.load("maps/"+maps[selectedMapIndex]+"/"+songfile)
-                    except pygame.error:
-                        continue
-                    
-                    loadedFile = parseMap(maps[selectedMapIndex], config)
-                    if loadedFile[0]==[]: continue
-                    loadedMap = loadedFile[0]
-                    pygame.mixer.music.play()
-                    start_offset = 0
-                    if loadedMap[0][0]<2000:
-                        pygame.mixer.music.pause()
-                        start_offset = 2000
-                    background = loadedFile[1]
-                    if background!="":
-                        backgroundBg = pygame.transform.scale(pygame.image.load("maps/"+maps[selectedMapIndex]+"/"+background).convert(), tuple(config["resolution"]))
-                        backgroundBg.set_alpha(config["backgrounds"]["mapBackground"]["brightness"])
-                    for i in range(100):
-                        try:
-                            loadedObjects.append(loadedMap.pop(0))
-                        except IndexError:
-                            break
-                    isPlaying = True
-                    playingFrame = pygame.time.get_ticks()
+                elif event.key==pygame.K_RETURN and not isPlaying:
+                    startMap = "T"
+                elif event.key==eval(f"pygame.K_{config['keybinds']['retry']}") and isPlaying:
+                    isPlaying = False
+                    pygame.mixer.music.stop()
+                    startMap = True
                 else:
                     if isPlaying:
                         for i in range(len(config["keybinds"]["notes"])):
@@ -633,7 +596,40 @@ def gameLoop():
                         if event.key == eval(f'pygame.K_{config["keybinds"]["notes"][i]}'):
                             keysDown[i] = False
                             keysReleased[i] = True
-                            
+        if startMap=="T":
+            if startMap=="T": startMap = False
+            if maps==[]: continue 
+            if os.path.exists("maps/"+maps[selectedMapIndex]+"/map.osu"):
+                for line in open("maps/"+maps[selectedMapIndex]+"/map.osu", encoding="utf-8").read().split("\n"):
+                    if "AudioFilename" in line:
+                        songfile = line.replace("AudioFilename:", "")
+                        if songfile[0]==" ": songfile = songfile[1:]
+            try:
+                pygame.mixer.music.load("maps/"+maps[selectedMapIndex]+"/"+songfile)
+            except pygame.error:
+                continue
+            
+            loadedFile = parseMap(maps[selectedMapIndex], config)
+            if loadedFile[0]==[]: continue
+            loadedMap = loadedFile[0]
+            pygame.mixer.music.play()
+            start_offset = 0
+            if loadedMap[0][0]<2000:
+                pygame.mixer.music.pause()
+                start_offset = 2000
+            background = loadedFile[1]
+            if background!="":
+                backgroundBg = pygame.transform.scale(pygame.image.load("maps/"+maps[selectedMapIndex]+"/"+background).convert(), tuple(config["resolution"]))
+                backgroundBg.set_alpha(config["backgrounds"]["mapBackground"]["brightness"])
+            for i in range(100):
+                try:
+                    loadedObjects.append(loadedMap.pop(0))
+                except IndexError:
+                    break
+            isPlaying = True
+            playingFrame = pygame.time.get_ticks()
+        elif startMap: continue
+
         for i in range(len(keysDown)):
             if isPlaying:
                 if config["note"]["type"]=="circle":
