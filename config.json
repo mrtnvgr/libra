@@ -4,6 +4,7 @@
 	"keybinds": {
         "notes": ["q","w","LEFTBRACKET", "RIGHTBRACKET"],
         "back": "ESCAPE",
+        "retry": "F1",
         "randomMap": "F2",
         "deleteMap": "DELETE",
         "reload": "F3",
